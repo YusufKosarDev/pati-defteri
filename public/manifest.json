@@ -1,0 +1,17 @@
+{
+  "name": "PatiDefteri",
+  "short_name": "PatiDefteri",
+  "description": "Evcil Hayvan Bakım Günlüğü",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAF7",
+  "theme_color": "#10b981",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
