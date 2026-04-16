@@ -1,15 +1,16 @@
+import { useState } from "react";
 import { BrowserRouter, Routes, Route, useNavigate, useParams } from "react-router-dom";
 import { PetProvider, usePet } from "./context/PetContext";
 import Navbar from "./components/Layout/Navbar";
+import ScrollToTop from "./components/UI/ScrollToTop";
 import LandingPage from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
 import PetDetailPage from "./pages/PetDetailPage";
 import SettingsPage from "./pages/SettingsPage";
-import BackupPage from "./pages/BackupPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import OnboardingWrapper from "./components/UI/Onboarding";
 
-function PetDetailWrapper() {
+function PetDetailWrapper({ tabMemory, setTabMemory }) {
   const { id } = useParams();
   const { pets } = usePet();
   const navigate = useNavigate();
@@ -27,14 +28,23 @@ function PetDetailWrapper() {
     );
   }
 
-  return <PetDetailPage pet={pet} onBack={() => navigate("/app")} />;
+  return (
+    <PetDetailPage
+      pet={pet}
+      onBack={() => navigate("/app")}
+      initialTab={tabMemory[id] || "records"}
+      onTabChange={(tab) => setTabMemory((prev) => ({ ...prev, [id]: tab }))}
+    />
+  );
 }
 
 function AppRoutes() {
   const navigate = useNavigate();
+  const [tabMemory, setTabMemory] = useState({});
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
+      <ScrollToTop />
       <Navbar />
       <Routes>
         <Route path="/" element={<LandingPage />} />
@@ -43,9 +53,10 @@ function AppRoutes() {
             <HomePage onSelectPet={(pet) => navigate(`/pets/${pet.id}`)} />
           </OnboardingWrapper>
         } />
-        <Route path="/pets/:id" element={<PetDetailWrapper />} />
+        <Route path="/pets/:id" element={
+          <PetDetailWrapper tabMemory={tabMemory} setTabMemory={setTabMemory} />
+        } />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/backup" element={<BackupPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </div>

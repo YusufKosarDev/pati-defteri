@@ -15,9 +15,9 @@ const tabs = [
   { key: "vet", icon: "🏥", labelKey: "vetTitle" },
 ];
 
-function PetDetailPage({ pet, onBack }) {
+function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }) {
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("records");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -113,7 +113,7 @@ function PetDetailPage({ pet, onBack }) {
         {tabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => { setActiveTab(tab.key); onTabChange?.(tab.key); }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
               activeTab === tab.key
                 ? "bg-emerald-500 text-white shadow-sm"

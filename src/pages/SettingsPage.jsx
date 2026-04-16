@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { usePet } from "../context/PetContext";
 import Navbar from "../components/Layout/Navbar";
@@ -6,9 +7,10 @@ import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 
 function SettingsPage() {
-  const { darkMode, setDarkMode, pets, records, language, setLanguage } = usePet();
+  const { darkMode, setDarkMode, pets, records, weights, setPets, setRecords, setWeights, language, setLanguage } = usePet();
   const { t } = useTranslation();
   const { permission, requestPermission, checkAndNotify, isSupported } = useNotifications(pets, records);
+  const [dragOver, setDragOver] = useState(false);
 
   const handleNotificationToggle = async () => {
     if (!isSupported) {
@@ -44,6 +46,45 @@ function SettingsPage() {
     toast.success(t("toastTestSent"));
   };
 
+  const handleExport = () => {
+    const data = {
+      version: "1.0",
+      exportDate: new Date().toISOString(),
+      pets,
+      records,
+      weights,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `patidefteri-yedek-${new Date().toLocaleDateString("tr-TR").replace(/\./g, "-")}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(t("toastBackupExported"));
+  };
+
+  const handleImport = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data.pets || !data.records) {
+          toast.error(t("toastBackupError"));
+          return;
+        }
+        setPets(data.pets || []);
+        setRecords(data.records || []);
+        setWeights(data.weights || []);
+        toast.success(`${data.pets.length} ${t("toastBackupImported")}`);
+      } catch {
+        toast.error(t("toastBackupReadError"));
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const Section = ({ title, children, delay = 0 }) => (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -75,6 +116,12 @@ function SettingsPage() {
     default: t("notificationDefault"),
   }[permission];
 
+  const stats = [
+    { icon: "🐾", label: t("backupPets"), count: pets.length },
+    { icon: "💉", label: t("backupRecords"), count: records.length },
+    { icon: "⚖️", label: t("backupWeights"), count: weights.length },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <Navbar />
@@ -87,6 +134,7 @@ function SettingsPage() {
           {t("settingsTitle")}
         </motion.h1>
 
+        {/* Görünüm */}
         <Section title={t("appearance")} delay={0.1}>
           <Row icon="🌙" label={t("darkMode")} desc={t("darkModeDesc")}>
             <button
@@ -115,6 +163,7 @@ function SettingsPage() {
           </Row>
         </Section>
 
+        {/* Bildirimler */}
         <Section title={t("notifications")} delay={0.2}>
           <Row icon="🔔" label={t("pushNotifications")} desc={t("pushNotificationsDesc")}>
             <button
@@ -141,7 +190,61 @@ function SettingsPage() {
           )}
         </Section>
 
-        <Section title={t("about")} delay={0.3}>
+        {/* Yedekleme */}
+        <Section title={t("backupTitle")} delay={0.3}>
+          {/* İstatistikler */}
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {stats.map((s) => (
+              <div key={s.label} className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
+                <div className="text-xl mb-1">{s.icon}</div>
+                <div className="text-lg font-bold text-gray-800 dark:text-gray-100">{s.count}</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500">{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <Row icon="💾" label={t("exportTitle")} desc={t("exportDesc")}>
+            <button
+              onClick={handleExport}
+              className="text-xs bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900 px-3 py-1.5 rounded-xl font-medium hover:bg-emerald-100 dark:hover:bg-emerald-900 transition-colors cursor-pointer"
+            >
+              {t("exportBtn")}
+            </button>
+          </Row>
+
+          <div className="pt-3">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-xl">📂</span>
+              <div>
+                <div className="font-medium text-gray-800 dark:text-gray-100 text-sm">{t("importTitle")}</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500">{t("importDesc")}</div>
+                <div className="text-xs text-red-400 dark:text-red-500 mt-0.5">{t("importWarning")}</div>
+              </div>
+            </div>
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => { e.preventDefault(); setDragOver(false); handleImport(e.dataTransfer.files[0]); }}
+              className={`border-2 border-dashed rounded-2xl p-6 text-center transition-colors ${dragOver ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950" : "border-gray-200 dark:border-gray-700"}`}
+            >
+              <p className="text-sm text-gray-400 dark:text-gray-500 mb-3">{t("importDrop")}</p>
+              <label className="cursor-pointer">
+                <span className="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+                  {t("importOr")}
+                </span>
+                <input
+                  type="file"
+                  accept=".json"
+                  className="hidden"
+                  onChange={(e) => handleImport(e.target.files[0])}
+                />
+              </label>
+            </div>
+          </div>
+        </Section>
+
+        {/* Hakkında */}
+        <Section title={t("about")} delay={0.4}>
           <Row icon="🐾" label={t("appName")} desc={t("appDesc")}>
             <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">v1.0.0</span>
           </Row>
