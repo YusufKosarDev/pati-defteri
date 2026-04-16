@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 import useLocalStorage from "../hooks/useLocalStorage";
 import toast from "react-hot-toast";
 import i18n from "../i18n/index.js";
@@ -6,11 +7,16 @@ import i18n from "../i18n/index.js";
 const PetContext = createContext();
 
 export function PetProvider({ children }) {
-  const [pets, setPets] = useLocalStorage("pets", []);
-  const [records, setRecords] = useLocalStorage("records", []);
-  const [weights, setWeights] = useLocalStorage("weights", []);
-  const [darkMode, setDarkMode] = useLocalStorage("darkMode", false);
-  const [language, setLanguage] = useLocalStorage("language", "tr");
+  const { user } = useAuth();
+
+  const storage = user?.isGuest ? sessionStorage : localStorage;
+  const prefix = user?.id || "guest";
+
+  const [pets, setPets] = useLocalStorage(`pets_${prefix}`, [], storage);
+  const [records, setRecords] = useLocalStorage(`records_${prefix}`, [], storage);
+  const [weights, setWeights] = useLocalStorage(`weights_${prefix}`, [], storage);
+  const [darkMode, setDarkMode] = useLocalStorage("darkMode", false, localStorage);
+  const [language, setLanguage] = useLocalStorage("language", "tr", localStorage);
 
   useEffect(() => {
     if (darkMode) {

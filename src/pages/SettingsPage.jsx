@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { usePet } from "../context/PetContext";
+import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Layout/Navbar";
 import useNotifications from "../hooks/useNotifications";
 import toast from "react-hot-toast";
@@ -8,9 +9,13 @@ import { motion } from "framer-motion";
 
 function SettingsPage() {
   const { darkMode, setDarkMode, pets, records, weights, setPets, setRecords, setWeights, language, setLanguage } = usePet();
-  const { t } = useTranslation();
+  const { user, updateProfile, logout } = useAuth();
+  const { t, i18n } = useTranslation();
   const { permission, requestPermission, checkAndNotify, isSupported } = useNotifications(pets, records);
   const [dragOver, setDragOver] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState(user?.name || "");
+  const isEN = i18n.language === "en";
 
   const handleNotificationToggle = async () => {
     if (!isSupported) {
@@ -85,6 +90,13 @@ function SettingsPage() {
     reader.readAsText(file);
   };
 
+  const handleSaveName = () => {
+    if (!newName.trim()) return;
+    updateProfile(newName.trim());
+    setEditingName(false);
+    toast.success(isEN ? "Name updated!" : "İsim güncellendi!");
+  };
+
   const Section = ({ title, children, delay = 0 }) => (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -122,6 +134,8 @@ function SettingsPage() {
     { icon: "⚖️", label: t("backupWeights"), count: weights.length },
   ];
 
+  const avatarColor = user?.isGuest ? "bg-gray-500" : "bg-emerald-500";
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <Navbar />
@@ -133,6 +147,74 @@ function SettingsPage() {
         >
           {t("settingsTitle")}
         </motion.h1>
+
+        {/* Profil */}
+        {user && (
+          <Section title={isEN ? "Profile" : "Profil"} delay={0.05}>
+            <div className="flex items-center gap-4 py-2">
+              <div className={`w-12 h-12 ${avatarColor} rounded-2xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0`}>
+                {user.name?.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1">
+                {editingName ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
+                      className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSaveName}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-xs font-medium cursor-pointer transition-colors"
+                    >
+                      {isEN ? "Save" : "Kaydet"}
+                    </button>
+                    <button
+                      onClick={() => { setEditingName(false); setNewName(user.name); }}
+                      className="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 px-3 py-1.5 rounded-xl text-xs font-medium cursor-pointer transition-colors"
+                    >
+                      {isEN ? "Cancel" : "İptal"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm">{user.name}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        {user.isGuest ? (isEN ? "Guest User" : "Misafir Kullanıcı") : user.email}
+                      </p>
+                    </div>
+                    {!user.isGuest && (
+                      <button
+                        onClick={() => setEditingName(true)}
+                        className="ml-2 text-xs text-emerald-500 hover:text-emerald-600 cursor-pointer font-medium"
+                      >
+                        {isEN ? "Edit" : "Düzenle"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+              {user.isGuest && (
+                <span className="text-xs bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400 px-2 py-1 rounded-full font-medium">
+                  {isEN ? "Guest" : "Misafir"}
+                </span>
+              )}
+            </div>
+
+            {user.isGuest && (
+              <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-100 dark:border-yellow-900 rounded-xl">
+                <p className="text-xs text-yellow-700 dark:text-yellow-400">
+                  ⚠️ {isEN
+                    ? "You're using as a guest. Data will be deleted when browser closes. Register to save permanently."
+                    : "Misafir olarak kullanıyorsunuz. Tarayıcı kapanınca veriler silinir. Kalıcı kayıt için üye olun."}
+                </p>
+              </div>
+            )}
+          </Section>
+        )}
 
         {/* Görünüm */}
         <Section title={t("appearance")} delay={0.1}>
@@ -192,7 +274,6 @@ function SettingsPage() {
 
         {/* Yedekleme */}
         <Section title={t("backupTitle")} delay={0.3}>
-          {/* İstatistikler */}
           <div className="grid grid-cols-3 gap-3 mb-4">
             {stats.map((s) => (
               <div key={s.label} className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">

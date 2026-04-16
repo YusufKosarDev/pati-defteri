@@ -85,7 +85,7 @@ function LandingPage() {
               ))}
             </div>
             <button
-              onClick={() => navigate("/app")}
+              onClick={() => navigate("/auth")}
               className="bg-[#2D2D2D] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#444] transition-colors cursor-pointer"
             >
               {t("enterApp")}
@@ -118,7 +118,7 @@ function LandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={() => navigate("/app")}
+              onClick={() => navigate("/auth")}
               className="bg-[#2D2D2D] text-white px-8 py-4 rounded-2xl text-base font-medium hover:bg-[#444] transition-all hover:scale-105 cursor-pointer shadow-lg"
             >
               {t("landingCTA")}
@@ -243,7 +243,7 @@ function LandingPage() {
               {t("landingCTADesc")}
             </p>
             <button
-              onClick={() => navigate("/app")}
+              onClick={() => navigate("/auth")}
               className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-2xl font-medium transition-all hover:scale-105 cursor-pointer"
             >
               {t("landingCTAButton")}
