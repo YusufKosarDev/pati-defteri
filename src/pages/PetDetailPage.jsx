@@ -31,7 +31,7 @@ function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }) {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <SkeletonBox className="h-10 w-20" />
           <SkeletonBox className="h-10 w-28" />
@@ -52,7 +52,7 @@ function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-5xl mx-auto px-6 py-8">
       {/* Üst Bar */}
       <div className="flex items-center justify-between mb-6">
         <Button variant="secondary" onClick={onBack}>{t("back")}</Button>

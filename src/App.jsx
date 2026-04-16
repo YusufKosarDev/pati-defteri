@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BrowserRouter, Routes, Route, useNavigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
 import { PetProvider, usePet } from "./context/PetContext";
 import Navbar from "./components/Layout/Navbar";
 import ScrollToTop from "./components/UI/ScrollToTop";
@@ -18,7 +18,7 @@ function PetDetailWrapper({ tabMemory, setTabMemory }) {
 
   if (!pet) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center text-gray-400 dark:text-gray-500">
+      <div className="max-w-5xl mx-auto px-6 py-16 text-center text-gray-400 dark:text-gray-500">
         <div className="text-6xl mb-4">🐾</div>
         <p className="text-lg font-medium">Hayvan bulunamadı.</p>
         <button onClick={() => navigate("/app")} className="mt-4 text-emerald-500 underline cursor-pointer">
@@ -40,10 +40,12 @@ function PetDetailWrapper({ tabMemory, setTabMemory }) {
 
 function AppRoutes() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [tabMemory, setTabMemory] = useState({});
+  const isLanding = location.pathname === "/";
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
+    <div className={`min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-200 ${!isLanding ? "md:pl-56 pt-14 md:pt-0" : ""}`}>
       <ScrollToTop />
       <Navbar />
       <Routes>

@@ -52,7 +52,7 @@ function HomePage({ onSelectPet }) {
   const greeting = hour < 12 ? "🌅 Günaydın!" : hour < 18 ? "☀️ İyi günler!" : "🌙 İyi akşamlar!";
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-5xl mx-auto px-6 py-8">
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
