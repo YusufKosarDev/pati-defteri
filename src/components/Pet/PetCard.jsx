@@ -5,12 +5,14 @@ import { usePet } from "../../context/PetContext";
 import { formatDate, calculateAge, getAvatarColor } from "../../utils/dateHelpers";
 import Button from "../UI/Button";
 import Modal from "../UI/Modal";
+import ConfirmModal from "../UI/ConfirmModal";
 import PetForm from "./PetForm";
 
 function PetCard({ pet, onSelect, index = 0 }) {
   const { deletePet } = usePet();
   const { t } = useTranslation();
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const age = calculateAge(pet.birthDate);
   const avatarColor = getAvatarColor(pet.name);
@@ -50,13 +52,22 @@ function PetCard({ pet, onSelect, index = 0 }) {
         <div className="flex gap-2">
           <Button onClick={() => onSelect(pet)} className="flex-1">{t("records")}</Button>
           <Button variant="outline" onClick={() => setEditOpen(true)}>{t("edit")}</Button>
-          <Button variant="danger" onClick={() => deletePet(pet.id)}>{t("delete")}</Button>
+          <Button variant="danger" onClick={() => setDeleteOpen(true)}>{t("delete")}</Button>
         </div>
       </motion.div>
 
       <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} title={t("editPetTitle")}>
         <PetForm onClose={() => setEditOpen(false)} existingPet={pet} />
       </Modal>
+
+      <ConfirmModal
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={() => deletePet(pet.id)}
+        title={`${pet.name} silinsin mi?`}
+        desc="Tüm kayıtlar ve ağırlık verileri de silinecek. Bu işlem geri alınamaz!"
+        confirmText={t("delete")}
+      />
     </>
   );
 }
