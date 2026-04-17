@@ -15,16 +15,11 @@ export function PetProvider({ children }) {
   const [pets, setPets] = useLocalStorage(`pets_${prefix}`, [], storage);
   const [records, setRecords] = useLocalStorage(`records_${prefix}`, [], storage);
   const [weights, setWeights] = useLocalStorage(`weights_${prefix}`, [], storage);
-  const [darkMode, setDarkMode] = useLocalStorage("darkMode", false, localStorage);
   const [language, setLanguage] = useLocalStorage("language", "tr", localStorage);
 
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
+    document.documentElement.classList.add("dark");
+  }, []);
 
   useEffect(() => {
     i18n.changeLanguage(language);
@@ -85,7 +80,6 @@ export function PetProvider({ children }) {
       pets, setPets, addPet, updatePet, deletePet,
       records, setRecords, addRecord, updateRecord, deleteRecord, getRecordsByPet,
       weights, setWeights, addWeight, deleteWeight, getWeightsByPet,
-      darkMode, setDarkMode,
       language, setLanguage,
     }}>
       {children}
