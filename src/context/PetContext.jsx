@@ -25,15 +25,17 @@ export function PetProvider({ children }) {
     i18n.changeLanguage(language);
   }, [language]);
 
+  const isEN = () => i18n.language === "en";
+
   const addPet = (pet) => {
     const newPet = { ...pet, id: Date.now().toString() };
     setPets([...pets, newPet]);
-    toast.success(`${pet.name} ${i18n.t("toastPetAdded")}`);
+    toast.success(isEN() ? `${pet.name} added! 🐾` : `${pet.name} eklendi! 🐾`);
   };
 
   const updatePet = (id, updatedPet) => {
     setPets(pets.map((p) => (p.id === id ? { ...p, ...updatedPet } : p)));
-    toast.success(i18n.t("toastPetUpdated"));
+    toast.success(isEN() ? "Updated! ✅" : "Güncellendi! ✅");
   };
 
   const deletePet = (id) => {
@@ -41,23 +43,23 @@ export function PetProvider({ children }) {
     setPets(pets.filter((p) => p.id !== id));
     setRecords(records.filter((r) => r.petId !== id));
     setWeights(weights.filter((w) => w.petId !== id));
-    toast.success(`${pet?.name} silindi.`);
+    toast.success(isEN() ? `${pet?.name} deleted.` : `${pet?.name} silindi.`);
   };
 
   const addRecord = (record) => {
     const newRecord = { ...record, id: Date.now().toString() };
     setRecords([...records, newRecord]);
-    toast.success(i18n.t("toastRecordAdded"));
+    toast.success(isEN() ? "Record added! 💉" : "Kayıt eklendi! 💉");
   };
 
   const updateRecord = (id, updatedRecord) => {
     setRecords(records.map((r) => (r.id === id ? { ...r, ...updatedRecord } : r)));
-    toast.success(i18n.t("toastRecordUpdated"));
+    toast.success(isEN() ? "Record updated! ✅" : "Kayıt güncellendi! ✅");
   };
 
   const deleteRecord = (id) => {
     setRecords(records.filter((r) => r.id !== id));
-    toast.success(i18n.t("toastRecordDeleted"));
+    toast.success(isEN() ? "Record deleted." : "Kayıt silindi.");
   };
 
   const getRecordsByPet = (petId) => records.filter((r) => r.petId === petId);
@@ -65,12 +67,12 @@ export function PetProvider({ children }) {
   const addWeight = (weight) => {
     const newWeight = { ...weight, id: Date.now().toString() };
     setWeights([...weights, newWeight]);
-    toast.success(`${weight.weight} ${i18n.t("toastWeightAdded")}`);
+    toast.success(isEN() ? `${weight.weight} kg saved! ⚖️` : `${weight.weight} kg kaydedildi! ⚖️`);
   };
 
   const deleteWeight = (id) => {
     setWeights(weights.filter((w) => w.id !== id));
-    toast.success(i18n.t("toastWeightDeleted"));
+    toast.success(isEN() ? "Weight record deleted." : "Ağırlık kaydı silindi.");
   };
 
   const getWeightsByPet = (petId) => weights.filter((w) => w.petId === petId);

@@ -1,9 +1,12 @@
 import { motion } from "framer-motion";
 import { usePet } from "../../context/PetContext";
+import { useTranslation } from "react-i18next";
 import { isOverdue, isUpcoming, getDaysUntil } from "../../utils/dateHelpers";
 
 function SummaryBanner() {
   const { pets, records } = usePet();
+  const { t, i18n } = useTranslation();
+  const isEN = i18n.language === "en";
 
   if (pets.length === 0) return null;
 
@@ -16,12 +19,12 @@ function SummaryBanner() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-emerald-50 dark:bg-emerald-950 border border-emerald-100 dark:border-emerald-900 rounded-2xl p-4 mb-6 flex items-center gap-3"
+        className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 mb-6 flex items-center gap-3"
       >
         <span className="text-2xl">✅</span>
         <div>
-          <p className="font-semibold text-emerald-700 dark:text-emerald-400">Her şey yolunda!</p>
-          <p className="text-sm text-emerald-500 dark:text-emerald-600">Yaklaşan veya gecikmiş bakım yok.</p>
+          <p className="font-semibold text-emerald-400">{t("allGood")}</p>
+          <p className="text-sm text-emerald-500/70">{t("allGoodDesc")}</p>
         </div>
       </motion.div>
     );
@@ -38,16 +41,18 @@ function SummaryBanner() {
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-red-50 dark:bg-red-950 border border-red-100 dark:border-red-900 rounded-2xl p-4"
+          className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4"
         >
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xl">⚠️</span>
-            <p className="font-bold text-red-600 dark:text-red-400">{overdueRecords.length} gecikmiş bakım var!</p>
+            <p className="font-bold text-red-400">
+              {overdueRecords.length} {t("overdueTitle")}
+            </p>
           </div>
           <ul className="flex flex-col gap-1">
             {overdueRecords.map((r) => (
-              <li key={r.id} className="text-sm text-red-500 dark:text-red-400">
-                • <span className="font-medium">{getPetName(r.petId)}</span> — {r.type} ({Math.abs(getDaysUntil(r.nextDate))} gün geçti)
+              <li key={r.id} className="text-sm text-red-400/80">
+                • <span className="font-medium">{getPetName(r.petId)}</span> — {r.type} ({Math.abs(getDaysUntil(r.nextDate))} {t("daysPast")})
               </li>
             ))}
           </ul>
@@ -59,16 +64,18 @@ function SummaryBanner() {
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-100 dark:border-yellow-900 rounded-2xl p-4"
+          className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4"
         >
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xl">⏰</span>
-            <p className="font-bold text-yellow-700 dark:text-yellow-400">{upcomingRecords.length} yaklaşan bakım var!</p>
+            <p className="font-bold text-yellow-400">
+              {upcomingRecords.length} {t("upcomingTitle")}
+            </p>
           </div>
           <ul className="flex flex-col gap-1">
             {upcomingRecords.map((r) => (
-              <li key={r.id} className="text-sm text-yellow-600 dark:text-yellow-500">
-                • <span className="font-medium">{getPetName(r.petId)}</span> — {r.type} ({getDaysUntil(r.nextDate)} gün kaldı)
+              <li key={r.id} className="text-sm text-yellow-400/80">
+                • <span className="font-medium">{getPetName(r.petId)}</span> — {r.type} ({getDaysUntil(r.nextDate)} {t("daysLeft")})
               </li>
             ))}
           </ul>

@@ -5,6 +5,7 @@ import { usePet } from "../context/PetContext";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Layout/Navbar";
 import useNotifications from "../hooks/useNotifications";
+import usePageTitle from "../hooks/usePageTitle";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,18 +17,17 @@ function SettingsPage() {
   const { permission, requestPermission, checkAndNotify, isSupported } = useNotifications(pets, records);
   const isEN = i18n.language === "en";
 
+  usePageTitle(isEN ? "Settings" : "Ayarlar");
+
   const [dragOver, setDragOver] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(user?.name || "");
-
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current: "", next: "", confirm: "" });
   const [passwordErrors, setPasswordErrors] = useState({});
-
   const [showDeleteForm, setShowDeleteForm] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
-
   const [showUpgradeForm, setShowUpgradeForm] = useState(false);
   const [upgradeForm, setUpgradeForm] = useState({ name: "", email: "", password: "" });
   const [upgradeErrors, setUpgradeErrors] = useState({});

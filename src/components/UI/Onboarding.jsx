@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../../context/AuthContext";
 import useLocalStorage from "../../hooks/useLocalStorage";
 
 function Onboarding({ onFinish }) {
@@ -48,10 +49,10 @@ function Onboarding({ onFinish }) {
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+        className="bg-gray-900 rounded-3xl shadow-2xl border border-gray-800 w-full max-w-md overflow-hidden"
       >
         {/* Progress bar */}
-        <div className="h-1 bg-gray-100 dark:bg-gray-800">
+        <div className="h-1 bg-gray-800">
           <motion.div
             className="h-full bg-emerald-500"
             initial={{ width: 0 }}
@@ -73,10 +74,10 @@ function Onboarding({ onFinish }) {
               <div className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${current.color} flex items-center justify-center text-5xl mx-auto mb-6 shadow-lg`}>
                 {current.emoji}
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3">
+              <h2 className="text-2xl font-bold text-gray-100 mb-3">
                 {current.title}
               </h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+              <p className="text-gray-400 text-sm leading-relaxed">
                 {current.desc}
               </p>
             </motion.div>
@@ -91,7 +92,7 @@ function Onboarding({ onFinish }) {
                 className={`rounded-full transition-all cursor-pointer ${
                   i === step
                     ? "w-6 h-2 bg-emerald-500"
-                    : "w-2 h-2 bg-gray-200 dark:bg-gray-700"
+                    : "w-2 h-2 bg-gray-700"
                 }`}
               />
             ))}
@@ -102,7 +103,7 @@ function Onboarding({ onFinish }) {
             {step > 0 && (
               <button
                 onClick={() => setStep(step - 1)}
-                className="flex-1 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer text-sm"
+                className="flex-1 py-3 rounded-2xl border border-gray-700 text-gray-400 font-medium hover:bg-gray-800 transition-colors cursor-pointer text-sm"
               >
                 {t("onboardingBack")}
               </button>
@@ -118,7 +119,7 @@ function Onboarding({ onFinish }) {
           {step === 0 && (
             <button
               onClick={onFinish}
-              className="w-full text-center text-xs text-gray-400 dark:text-gray-600 mt-4 cursor-pointer hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
+              className="w-full text-center text-xs text-gray-600 mt-4 cursor-pointer hover:text-gray-400 transition-colors"
             >
               {t("onboardingSkip")}
             </button>
@@ -131,6 +132,7 @@ function Onboarding({ onFinish }) {
 
 function OnboardingWrapper({ children }) {
   const [seen, setSeen] = useLocalStorage("onboarding_seen", false);
+  const { user } = useAuth();
 
   if (!seen) {
     return (

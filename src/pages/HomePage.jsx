@@ -9,6 +9,7 @@ import DemoLoader from "../components/UI/DemoLoader";
 import { PageSkeleton } from "../components/UI/Skeleton";
 import { isOverdue, isUpcoming } from "../utils/dateHelpers";
 import useLocalStorage from "../hooks/useLocalStorage";
+import usePageTitle from "../hooks/usePageTitle";
 
 function StatCard({ icon, label, value, color, delay }) {
   return (
@@ -31,23 +32,26 @@ function StatCard({ icon, label, value, color, delay }) {
 
 function HomePage({ onSelectPet }) {
   const [loading, setLoading] = useState(true);
+  const [showDemo, setShowDemo] = useState(false);
   const { pets, records } = usePet();
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
 
+  usePageTitle(isEN ? "My Pets" : "Hayvanlarım");
+
+  const [onboardingSeen] = useLocalStorage("onboarding_seen", false);
   const [demoShown, setDemoShown] = useLocalStorage(`demo_shown_${user?.id}`, false);
-  const [showDemo, setShowDemo] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-      if (!demoShown && pets.length === 0) {
+      if (onboardingSeen && !demoShown && pets.length === 0) {
         setShowDemo(true);
       }
     }, 600);
     return () => clearTimeout(timer);
-  }, []);
+  }, [onboardingSeen]);
 
   const handleDemoClose = () => {
     setShowDemo(false);

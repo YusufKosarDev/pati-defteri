@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
+import usePageTitle from "../hooks/usePageTitle";
+import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 
 const PatiLogo = ({ size = 24 }) => (
@@ -17,8 +19,12 @@ const PatiLogo = ({ size = 24 }) => (
 function AuthPage() {
   const navigate = useNavigate();
   const { register, login, loginAsGuest } = useAuth();
-  const [mode, setMode] = useState("login"); // login | register
+  const { i18n } = useTranslation();
+  const isEN = i18n.language === "en";
+  const [mode, setMode] = useState("login");
   const [loading, setLoading] = useState(false);
+
+  usePageTitle(mode === "login" ? (isEN ? "Login" : "Giriş Yap") : (isEN ? "Register" : "Kayıt Ol"));
 
   const [form, setForm] = useState({
     name: "",
@@ -37,20 +43,20 @@ function AuthPage() {
   const validate = () => {
     const newErrors = {};
     if (mode === "register" && !form.name.trim()) {
-      newErrors.name = "İsim zorunlu.";
+      newErrors.name = isEN ? "Name is required." : "İsim zorunlu.";
     }
     if (!form.email.trim()) {
-      newErrors.email = "E-posta zorunlu.";
+      newErrors.email = isEN ? "Email is required." : "E-posta zorunlu.";
     } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-      newErrors.email = "Geçerli bir e-posta girin.";
+      newErrors.email = isEN ? "Enter a valid email." : "Geçerli bir e-posta girin.";
     }
     if (!form.password) {
-      newErrors.password = "Şifre zorunlu.";
+      newErrors.password = isEN ? "Password is required." : "Şifre zorunlu.";
     } else if (form.password.length < 6) {
-      newErrors.password = "Şifre en az 6 karakter olmalı.";
+      newErrors.password = isEN ? "Password must be at least 6 characters." : "Şifre en az 6 karakter olmalı.";
     }
     if (mode === "register" && form.password !== form.confirmPassword) {
-      newErrors.confirmPassword = "Şifreler eşleşmiyor.";
+      newErrors.confirmPassword = isEN ? "Passwords don't match." : "Şifreler eşleşmiyor.";
     }
     return newErrors;
   };
@@ -58,17 +64,13 @@ function AuthPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     setLoading(true);
 
     if (mode === "register") {
       const result = register(form.name, form.email, form.password);
       if (result.success) {
-        toast.success(`Hoş geldin, ${form.name}! 🐾`);
+        toast.success(isEN ? `Welcome, ${form.name}! 🐾` : `Hoş geldin, ${form.name}! 🐾`);
         navigate("/app");
       } else {
         setErrors({ email: result.error });
@@ -76,19 +78,18 @@ function AuthPage() {
     } else {
       const result = login(form.email, form.password);
       if (result.success) {
-        toast.success("Giriş başarılı! 🐾");
+        toast.success(isEN ? "Login successful! 🐾" : "Giriş başarılı! 🐾");
         navigate("/app");
       } else {
-        setErrors({ password: result.error });
+        setErrors({ password: isEN ? "Invalid email or password." : "E-posta veya şifre hatalı." });
       }
     }
-
     setLoading(false);
   };
 
   const handleGuest = () => {
     loginAsGuest();
-    toast("Misafir olarak devam ediyorsunuz. Veriler tarayıcı kapanınca silinir.", { icon: "⚠️" });
+    toast(isEN ? "Continuing as guest." : "Misafir olarak devam ediyorsunuz.", { icon: "👤" });
     navigate("/app");
   };
 
@@ -98,7 +99,6 @@ function AuthPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-      {/* Arka plan efekti */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl" />
@@ -109,31 +109,27 @@ function AuthPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md relative"
       >
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
             <PatiLogo size={32} />
           </div>
           <h1 className="text-2xl font-bold text-white">PatiDefteri</h1>
-          <p className="text-gray-400 text-sm mt-1">Evcil Hayvan Bakım Günlüğü</p>
+          <p className="text-gray-400 text-sm mt-1">
+            {isEN ? "Pet Care Journal" : "Evcil Hayvan Bakım Günlüğü"}
+          </p>
         </div>
 
-        {/* Kart */}
         <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 shadow-2xl">
-
-          {/* Tab */}
           <div className="flex bg-gray-800 rounded-xl p-1 mb-6">
             {["login", "register"].map((m) => (
               <button
                 key={m}
-                onClick={() => { setMode(m); setErrors({}); }}
+                onClick={() => { setMode(m); setErrors({}); setForm({ name: "", email: "", password: "", confirmPassword: "" }); }}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                  mode === m
-                    ? "bg-emerald-500 text-white shadow-sm"
-                    : "text-gray-400 hover:text-gray-200"
+                  mode === m ? "bg-emerald-500 text-white shadow-sm" : "text-gray-400 hover:text-gray-200"
                 }`}
               >
-                {m === "login" ? "Giriş Yap" : "Kayıt Ol"}
+                {m === "login" ? (isEN ? "Login" : "Giriş Yap") : (isEN ? "Register" : "Kayıt Ol")}
               </button>
             ))}
           </div>
@@ -150,54 +146,62 @@ function AuthPage() {
               >
                 {mode === "register" && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1.5">İsim</label>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                      {isEN ? "Name" : "İsim"}
+                    </label>
                     <input
                       name="name"
                       value={form.name}
                       onChange={handleChange}
                       className={inputClass("name")}
-                      placeholder="Adın Soyadın"
+                      placeholder={isEN ? "Your name" : "Adın Soyadın"}
                     />
                     {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">E-posta</label>
+                  <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                    {isEN ? "Email" : "E-posta"}
+                  </label>
                   <input
                     name="email"
                     type="email"
                     value={form.email}
                     onChange={handleChange}
                     className={inputClass("email")}
-                    placeholder="ornek@email.com"
+                    placeholder="example@email.com"
                   />
                   {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">Şifre</label>
+                  <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                    {isEN ? "Password" : "Şifre"}
+                  </label>
                   <input
                     name="password"
                     type="password"
                     value={form.password}
                     onChange={handleChange}
                     className={inputClass("password")}
-                    placeholder="En az 6 karakter"
+                    placeholder={isEN ? "At least 6 characters" : "En az 6 karakter"}
                   />
                   {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
                 </div>
 
                 {mode === "register" && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Şifre Tekrar</label>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                      {isEN ? "Confirm Password" : "Şifre Tekrar"}
+                    </label>
                     <input
                       name="confirmPassword"
                       type="password"
                       value={form.confirmPassword}
                       onChange={handleChange}
                       className={inputClass("confirmPassword")}
-                      placeholder="Şifreyi tekrar girin"
+                      placeholder={isEN ? "Repeat your password" : "Şifreyi tekrar girin"}
                     />
                     {errors.confirmPassword && <p className="text-red-400 text-xs mt-1">{errors.confirmPassword}</p>}
                   </div>
@@ -208,33 +212,31 @@ function AuthPage() {
                   disabled={loading}
                   className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white py-3 rounded-xl font-medium transition-all cursor-pointer text-sm mt-2"
                 >
-                  {loading ? "..." : mode === "login" ? "Giriş Yap" : "Kayıt Ol"}
+                  {loading ? "..." : mode === "login" ? (isEN ? "Login" : "Giriş Yap") : (isEN ? "Register" : "Kayıt Ol")}
                 </button>
               </motion.div>
             </AnimatePresence>
           </form>
 
-          {/* Ayırıcı */}
           <div className="flex items-center gap-3 my-4">
             <div className="flex-1 h-px bg-gray-800" />
-            <span className="text-xs text-gray-500">veya</span>
+            <span className="text-xs text-gray-500">{isEN ? "or" : "veya"}</span>
             <div className="flex-1 h-px bg-gray-800" />
           </div>
 
-          {/* Misafir */}
           <button
             onClick={handleGuest}
             className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 py-3 rounded-xl font-medium transition-all cursor-pointer text-sm border border-gray-700"
           >
-            👤 Misafir olarak devam et
+            👤 {isEN ? "Continue as Guest" : "Misafir olarak devam et"}
           </button>
 
-          {mode === "login" && (
-            <p className="text-center text-xs text-gray-500 mt-4">
-              Misafir olarak giriş yaparsanız verileriniz{" "}
-              <span className="text-yellow-400">tarayıcı kapanınca silinir.</span>
-            </p>
-          )}
+          <p className="text-center text-xs text-gray-600 mt-4">
+            ⚠️ {isEN
+              ? "As a guest, your data will be deleted when the browser closes."
+              : "Misafir olarak giriş yaparsanız verileriniz"}{" "}
+            {!isEN && <span className="text-yellow-500">tarayıcı kapanınca silinir.</span>}
+          </p>
         </div>
       </motion.div>
     </div>

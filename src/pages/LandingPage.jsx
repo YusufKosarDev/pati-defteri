@@ -2,11 +2,14 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { usePet } from "../context/PetContext";
+import usePageTitle from "../hooks/usePageTitle";
 
 function LandingPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { language, setLanguage } = usePet();
+
+  usePageTitle(null);
 
   useEffect(() => {
     const link = document.createElement("link");
@@ -50,8 +53,6 @@ function LandingPage() {
 
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif" }} className="min-h-screen bg-[#FAFAF7] overflow-x-hidden">
-
-      {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FAFAF7]/90 backdrop-blur-md border-b border-[#E8E8E0]">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -75,9 +76,7 @@ function LandingPage() {
                   key={lang}
                   onClick={() => setLanguage(lang)}
                   className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                    language === lang
-                      ? "bg-[#2D2D2D] text-white"
-                      : "text-gray-400 hover:text-gray-600"
+                    language === lang ? "bg-[#2D2D2D] text-white" : "text-gray-400 hover:text-gray-600"
                   }`}
                 >
                   {lang === "tr" ? "🇹🇷 TR" : "🇬🇧 EN"}
@@ -94,7 +93,6 @@ function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero */}
       <section className="pt-32 pb-24 px-6 relative">
         <div className="absolute top-20 right-0 w-96 h-96 bg-emerald-100 rounded-full blur-3xl opacity-40 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-100 rounded-full blur-3xl opacity-30 pointer-events-none" />
@@ -107,9 +105,7 @@ function LandingPage() {
 
           <h1 style={{ fontFamily: "'Playfair Display', serif" }} className="text-5xl md:text-7xl font-bold text-[#2D2D2D] leading-tight mb-6">
             {t("landingTitle1")}{" "}
-            <span className="italic text-emerald-600">
-              {t("landingTitle2")}
-            </span>
+            <span className="italic text-emerald-600">{t("landingTitle2")}</span>
           </h1>
 
           <p className="text-lg text-[#666] max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -127,7 +123,6 @@ function LandingPage() {
           </div>
         </div>
 
-        {/* Mock UI */}
         <div className="max-w-2xl mx-auto mt-16 relative">
           <div className="bg-white rounded-3xl shadow-2xl border border-[#E8E8E0] overflow-hidden">
             <div className="bg-emerald-500 px-6 py-4 flex items-center gap-3">
@@ -149,9 +144,7 @@ function LandingPage() {
               <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 mb-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span>⏰</span>
-                  <span className="font-bold text-yellow-700 text-sm">
-                    2 {t("upcomingTitle")}
-                  </span>
+                  <span className="font-bold text-yellow-700 text-sm">2 {t("upcomingTitle")}</span>
                 </div>
                 <div className="text-xs text-yellow-600">• Pamuk — {t("feature1Title")} (5 {t("daysLeft")})</div>
                 <div className="text-xs text-yellow-600 mt-1">• Karamel — {t("feature2Title")} (12 {t("daysLeft")})</div>
@@ -180,7 +173,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Features */}
       <section className="py-24 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -201,7 +193,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
       <section className="py-24 px-6 bg-[#FAFAF7]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -223,7 +214,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="py-24 px-6 bg-white">
         <div className="max-w-2xl mx-auto text-center">
           <div className="bg-[#2D2D2D] rounded-3xl p-12">
@@ -239,9 +229,7 @@ function LandingPage() {
             <h2 style={{ fontFamily: "'Playfair Display', serif" }} className="text-3xl font-bold text-white mb-4">
               {t("landingCTATitle")}
             </h2>
-            <p className="text-gray-400 mb-8 text-sm leading-relaxed">
-              {t("landingCTADesc")}
-            </p>
+            <p className="text-gray-400 mb-8 text-sm leading-relaxed">{t("landingCTADesc")}</p>
             <button
               onClick={() => navigate("/auth")}
               className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-2xl font-medium transition-all hover:scale-105 cursor-pointer"
@@ -252,7 +240,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-[#E8E8E0] py-8 px-6 bg-[#FAFAF7]">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">

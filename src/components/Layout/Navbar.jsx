@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { usePet } from "../../context/PetContext";
 import { useAuth } from "../../context/AuthContext";
+import ConfirmModal from "../UI/ConfirmModal";
 import toast from "react-hot-toast";
 
 const PatiLogo = ({ size = 16 }) => (
@@ -39,6 +39,13 @@ const SettingsIcon = () => (
   </svg>
 );
 
+const SearchIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"/>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+);
+
 const LogoutIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -62,17 +69,18 @@ const CloseIcon = () => (
   </svg>
 );
 
-function Navbar() {
+function Navbar({ searchOpen, setSearchOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const { } = usePet();
   const { t, i18n } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
   const isLanding = location.pathname === "/";
+  const isAuth = location.pathname === "/auth";
   const isEN = i18n.language === "en";
 
-  if (isLanding) return null;
+  if (isLanding || isAuth) return null;
 
   const navLinks = [
     { path: "/app", label: t("myPets"), icon: <HomeIcon /> },
@@ -86,8 +94,18 @@ function Navbar() {
   };
 
   const handleLogout = () => {
+    if (user?.isGuest) {
+      setLogoutConfirm(true);
+      return;
+    }
     logout();
-    toast.success("Çıkış yapıldı.");
+    toast.success(isEN ? "Logged out." : "Çıkış yapıldı.");
+    navigate("/");
+  };
+
+  const confirmLogout = () => {
+    logout();
+    toast.success(isEN ? "Logged out." : "Çıkış yapıldı.");
     navigate("/");
   };
 
@@ -108,7 +126,19 @@ function Navbar() {
           <span className="text-white font-semibold text-sm tracking-tight">{t("appName")}</span>
         </button>
 
-        <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+        {/* Arama */}
+        <div className="px-3 pt-3">
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-500 hover:text-gray-300 hover:border-gray-700 transition-all cursor-pointer text-sm"
+          >
+            <SearchIcon />
+            <span className="flex-1 text-left">{isEN ? "Search..." : "Ara..."}</span>
+            <kbd className="text-xs bg-gray-800 px-1.5 py-0.5 rounded text-gray-600">⌘K</kbd>
+          </button>
+        </div>
+
+        <nav className="flex-1 px-3 py-3 flex flex-col gap-1">
           {navLinks.map((link) => {
             const isActive = location.pathname === link.path;
             return (
@@ -171,6 +201,12 @@ function Navbar() {
           </button>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition-all cursor-pointer"
+            >
+              <SearchIcon />
+            </button>
             {user && (
               <div className={`w-7 h-7 ${avatarColor} rounded-full flex items-center justify-center text-white text-xs font-bold`}>
                 {userInitial}
@@ -256,6 +292,18 @@ function Navbar() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Misafir çıkış onayı */}
+      <ConfirmModal
+        isOpen={logoutConfirm}
+        onClose={() => setLogoutConfirm(false)}
+        onConfirm={confirmLogout}
+        title={isEN ? "Are you sure?" : "Emin misiniz?"}
+        desc={isEN
+          ? "You're a guest user. All your data will be deleted when you log out!"
+          : "Misafir kullanıcısınız. Çıkış yaparsanız tüm verileriniz silinecek!"}
+        confirmText={isEN ? "Logout" : "Çıkış Yap"}
+      />
     </>
   );
 }

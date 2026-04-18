@@ -2,8 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Toaster } from 'react-hot-toast'
 import './index.css'
+import './i18n/index.js'
 import App from './App.jsx'
-import "./i18n/index.js";
+import ErrorBoundary from './components/UI/ErrorBoundary.jsx'
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -13,35 +14,40 @@ if ("serviceWorker" in navigator) {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
-    <Toaster
-      position="bottom-right"
-      toastOptions={{
-        duration: 3000,
-        style: {
-          borderRadius: "12px",
-          fontFamily: "inherit",
-          fontSize: "14px",
-        },
-        success: {
+    <ErrorBoundary>
+      <App />
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          duration: 3000,
           style: {
-            background: "#f0fdf4",
-            border: "1px solid #bbf7d0",
-            color: "#15803d",
+            borderRadius: "12px",
+            fontFamily: "inherit",
+            fontSize: "14px",
+            background: "#1f2937",
+            color: "#f3f4f6",
+            border: "1px solid #374151",
           },
-          iconTheme: {
-            primary: "#22c55e",
-            secondary: "#f0fdf4",
+          success: {
+            style: {
+              background: "#064e3b",
+              border: "1px solid #065f46",
+              color: "#6ee7b7",
+            },
+            iconTheme: {
+              primary: "#10b981",
+              secondary: "#064e3b",
+            },
           },
-        },
-        error: {
-          style: {
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
-            color: "#b91c1c",
+          error: {
+            style: {
+              background: "#450a0a",
+              border: "1px solid #7f1d1d",
+              color: "#fca5a5",
+            },
           },
-        },
-      }}
-    />
+        }}
+      />
+    </ErrorBoundary>
   </StrictMode>,
 )
