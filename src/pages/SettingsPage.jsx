@@ -5,6 +5,7 @@ import { usePet } from "../context/PetContext";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Layout/Navbar";
 import useNotifications from "../hooks/useNotifications";
+import useEmailReminder from "../hooks/useEmailReminder";
 import usePageTitle from "../hooks/usePageTitle";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,6 +16,7 @@ function SettingsPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { permission, requestPermission, checkAndNotify, isSupported } = useNotifications(pets, records);
+  const { sendReminderEmail, hasReminders } = useEmailReminder(pets, records);
   const isEN = i18n.language === "en";
 
   usePageTitle(isEN ? "Settings" : "Ayarlar");
@@ -31,6 +33,7 @@ function SettingsPage() {
   const [showUpgradeForm, setShowUpgradeForm] = useState(false);
   const [upgradeForm, setUpgradeForm] = useState({ name: "", email: "", password: "" });
   const [upgradeErrors, setUpgradeErrors] = useState({});
+  const [emailInput, setEmailInput] = useState(user?.email || "");
 
   const handleNotificationToggle = async () => {
     if (!isSupported) { toast.error(t("toastNotificationDenied")); return; }
@@ -45,6 +48,23 @@ function SettingsPage() {
     if (permission !== "granted") { toast.error("Önce bildirim iznini açın!"); return; }
     new Notification(t("appName"), { body: t("pushNotificationsDesc"), icon: "/favicon.ico" });
     toast.success(t("toastTestSent"));
+  };
+
+  const handleSendReminderEmail = async () => {
+    if (!emailInput.trim()) {
+      toast.error(isEN ? "Please enter an email address." : "E-posta adresi girin.");
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(emailInput)) {
+      toast.error(isEN ? "Invalid email address." : "Geçersiz e-posta adresi.");
+      return;
+    }
+    const result = await sendReminderEmail(emailInput, user?.name);
+    if (result.success) {
+      toast.success(isEN ? "Mail app opened! 📧" : "Mail uygulaması açıldı! 📧");
+    } else {
+      toast.error(result.error);
+    }
   };
 
   const handleExport = () => {
@@ -298,6 +318,41 @@ function SettingsPage() {
               </button>
             </Row>
           )}
+        </Section>
+
+        {/* Email Hatırlatıcı */}
+        <Section title={isEN ? "Email Reminders" : "Email Hatırlatıcı"} delay={0.25}>
+          <div className="py-2">
+            <p className="text-sm text-gray-400 mb-4">
+              {isEN
+                ? "Opens your mail app with reminders pre-filled. Just hit send!"
+                : "Mail uygulamanızı açar, hatırlatıcılar hazır doldurulmuş gelir. Sadece gönderin!"}
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                placeholder={isEN ? "your@email.com" : "ornek@email.com"}
+                className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              />
+              <button
+                onClick={handleSendReminderEmail}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors flex items-center gap-2 flex-shrink-0"
+              >
+                📧 {isEN ? "Open Mail" : "Mail Aç"}
+              </button>
+            </div>
+            {hasReminders() ? (
+              <p className="text-xs text-emerald-400 mt-2">
+                ✅ {isEN ? "You have upcoming/overdue reminders to send." : "Gönderilecek yaklaşan/gecikmiş hatırlatıcılarınız var."}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-600 mt-2">
+                {isEN ? "No upcoming or overdue care at the moment." : "Şu an yaklaşan veya gecikmiş bakım yok."}
+              </p>
+            )}
+          </div>
         </Section>
 
         {/* Yedekleme */}
