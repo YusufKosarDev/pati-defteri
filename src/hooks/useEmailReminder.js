@@ -33,17 +33,27 @@ function useEmailReminder(pets, records) {
       });
     }
 
-    const subject = encodeURIComponent("🐾 PatiDefteri - Yaklaşan Bakım Hatırlatıcısı");
-    const body = encodeURIComponent(
-      `Merhaba ${userName || ""},\n\n` +
-      `Evcil hayvanlarınız için hatırlatıcılarınız var:\n\n` +
-      `${reminderList}\n` +
-      `Sağlıklı günler dileriz! 🐾\n` +
-      `PatiDefteri - https://pati-defteri.vercel.app`
-    );
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: toEmail,
+          userName: userName || "Sevgili Kullanıcı",
+          reminderList,
+        }),
+      });
 
-    window.location.href = `mailto:${toEmail}?subject=${subject}&body=${body}`;
-    return { success: true };
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.error || "Email gönderilemedi." };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: "Bağlantı hatası. Lütfen tekrar deneyin." };
+    }
   };
 
   const hasReminders = () => {
