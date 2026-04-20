@@ -53,6 +53,42 @@ export function calculateAge(birthDateString) {
   }
 }
 
+export function getBirthdayStatus(birthDateString) {
+  if (!birthDateString) return null;
+
+  const today = new Date();
+  const birth = new Date(birthDateString);
+
+  const thisYearBirthday = new Date(
+    today.getFullYear(),
+    birth.getMonth(),
+    birth.getDate()
+  );
+
+  const diff = Math.ceil(
+    (thisYearBirthday - today) / (1000 * 60 * 60 * 24)
+  );
+
+  const age = today.getFullYear() - birth.getFullYear();
+
+  if (diff === 0) return { type: "today", daysUntil: 0, age };
+  if (diff > 0 && diff <= 7) return { type: "upcoming", daysUntil: diff, age };
+  if (diff < 0) {
+    // Gelecek yılki doğum günü
+    const nextYearBirthday = new Date(
+      today.getFullYear() + 1,
+      birth.getMonth(),
+      birth.getDate()
+    );
+    const nextDiff = Math.ceil(
+      (nextYearBirthday - today) / (1000 * 60 * 60 * 24)
+    );
+    if (nextDiff <= 7) return { type: "upcoming", daysUntil: nextDiff, age: age + 1 };
+  }
+
+  return null;
+}
+
 const AVATAR_GRADIENTS = [
   "from-emerald-400 to-teal-500",
   "from-sky-400 to-blue-500",

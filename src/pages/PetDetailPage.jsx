@@ -7,6 +7,7 @@ import WeightSection from "../components/Weight/WeightSection";
 import VetCard from "../components/Vet/VetCard";
 import Button from "../components/UI/Button";
 import ExportButton from "../components/UI/ExportButton";
+import QRModal from "../components/UI/QRModal";
 import { RecordCardSkeleton, SkeletonBox } from "../components/UI/Skeleton";
 import usePageTitle from "../hooks/usePageTitle";
 
@@ -19,6 +20,7 @@ const tabs = [
 function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [qrOpen, setQrOpen] = useState(false);
   const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
 
@@ -61,11 +63,21 @@ function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }) {
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
+      {/* Üst Bar */}
       <div className="flex items-center justify-between mb-6">
         <Button variant="secondary" onClick={onBack}>{t("back")}</Button>
-        <ExportButton pet={pet} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setQrOpen(true)}
+            className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors border border-gray-700"
+          >
+            📱 QR
+          </button>
+          <ExportButton pet={pet} />
+        </div>
       </div>
 
+      {/* Profil Kartı */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -103,6 +115,7 @@ function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }) {
         </div>
       </motion.div>
 
+      {/* Tab Bar */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -125,6 +138,7 @@ function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }) {
         ))}
       </motion.div>
 
+      {/* Tab İçeriği */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
@@ -138,6 +152,9 @@ function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }) {
           {activeTab === "vet" && <VetCard pet={pet} />}
         </motion.div>
       </AnimatePresence>
+
+      {/* QR Modal */}
+      <QRModal isOpen={qrOpen} onClose={() => setQrOpen(false)} pet={pet} />
     </div>
   );
 }

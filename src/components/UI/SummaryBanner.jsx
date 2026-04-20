@@ -1,12 +1,15 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { usePet } from "../../context/PetContext";
 import { useTranslation } from "react-i18next";
-import { isOverdue, isUpcoming, getDaysUntil } from "../../utils/dateHelpers";
+import { isOverdue, isUpcoming, getDaysUntil, getBirthdayStatus } from "../../utils/dateHelpers";
+import useConfetti from "../../hooks/useConfetti";
 
 function SummaryBanner() {
   const { pets, records } = usePet();
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const isEN = i18n.language === "en";
+  const { fireConfetti } = useConfetti();
 
   if (pets.length === 0) return null;
 
@@ -14,7 +17,24 @@ function SummaryBanner() {
   const upcomingRecords = records.filter((r) => r.nextDate && isUpcoming(r.nextDate));
   const getPetName = (petId) => pets.find((p) => p.id === petId)?.name || "";
 
-  if (overdueRecords.length === 0 && upcomingRecords.length === 0) {
+  // Doğum günleri
+  const birthdayPets = pets
+    .map((pet) => ({ pet, status: getBirthdayStatus(pet.birthDate) }))
+    .filter(({ status }) => status !== null);
+
+  const todayBirthdays = birthdayPets.filter(({ status }) => status.type === "today");
+  const upcomingBirthdays = birthdayPets.filter(({ status }) => status.type === "upcoming");
+
+  // Bugün doğum günü varsa konfeti
+  useEffect(() => {
+    if (todayBirthdays.length > 0) {
+      setTimeout(fireConfetti, 500);
+    }
+  }, [todayBirthdays.length]);
+
+  const allGood = overdueRecords.length === 0 && upcomingRecords.length === 0 && todayBirthdays.length === 0 && upcomingBirthdays.length === 0;
+
+  if (allGood) {
     return (
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -23,8 +43,12 @@ function SummaryBanner() {
       >
         <span className="text-2xl">✅</span>
         <div>
-          <p className="font-semibold text-emerald-400">{t("allGood")}</p>
-          <p className="text-sm text-emerald-500/70">{t("allGoodDesc")}</p>
+          <p className="font-semibold text-emerald-400">
+            {isEN ? "All good!" : "Her şey yolunda!"}
+          </p>
+          <p className="text-sm text-emerald-500/70">
+            {isEN ? "No upcoming or overdue care." : "Yaklaşan veya gecikmiş bakım yok."}
+          </p>
         </div>
       </motion.div>
     );
@@ -36,6 +60,56 @@ function SummaryBanner() {
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col gap-3 mb-6"
     >
+      {/* Bugün doğum günü */}
+      {todayBirthdays.map(({ pet, status }) => (
+        <motion.div
+          key={pet.id}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="bg-pink-500/10 border border-pink-500/20 rounded-2xl p-4"
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xl">🎂</span>
+            <p className="font-bold text-pink-400">
+              {isEN ? "Happy Birthday!" : "Mutlu Yıllar!"}
+            </p>
+          </div>
+          <p className="text-sm text-pink-400/80">
+            {isEN
+              ? `Today is ${pet.name}'s ${status.age}${status.age === 1 ? "st" : status.age === 2 ? "nd" : status.age === 3 ? "rd" : "th"} birthday! 🎉`
+              : `Bugün ${pet.name}'ın ${status.age}. doğum günü! 🎉`}
+          </p>
+        </motion.div>
+      ))}
+
+      {/* Yaklaşan doğum günleri */}
+      {upcomingBirthdays.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.05 }}
+          className="bg-pink-500/10 border border-pink-500/20 rounded-2xl p-4"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xl">🎂</span>
+            <p className="font-bold text-pink-400">
+              {isEN ? "Upcoming Birthdays" : "Yaklaşan Doğum Günleri"}
+            </p>
+          </div>
+          <ul className="flex flex-col gap-1">
+            {upcomingBirthdays.map(({ pet, status }) => (
+              <li key={pet.id} className="text-sm text-pink-400/80">
+                • <span className="font-medium">{pet.name}</span> —{" "}
+                {isEN
+                  ? `${status.daysUntil} day${status.daysUntil !== 1 ? "s" : ""} left (turning ${status.age})`
+                  : `${status.daysUntil} gün kaldı (${status.age} yaşına giriyor)`}
+              </li>
+            ))}
+          </ul>
+        </motion.div>
+      )}
+
+      {/* Gecikmiş bakımlar */}
       {overdueRecords.length > 0 && (
         <motion.div
           initial={{ opacity: 0, x: -10 }}
@@ -46,19 +120,20 @@ function SummaryBanner() {
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xl">⚠️</span>
             <p className="font-bold text-red-400">
-              {overdueRecords.length} {t("overdueTitle")}
+              {overdueRecords.length} {isEN ? "Overdue" : "Gecikmiş"}
             </p>
           </div>
           <ul className="flex flex-col gap-1">
             {overdueRecords.map((r) => (
               <li key={r.id} className="text-sm text-red-400/80">
-                • <span className="font-medium">{getPetName(r.petId)}</span> — {r.type} ({Math.abs(getDaysUntil(r.nextDate))} {t("daysPast")})
+                • <span className="font-medium">{getPetName(r.petId)}</span> — {r.type} ({Math.abs(getDaysUntil(r.nextDate))} {isEN ? "days ago" : "gün geçti"})
               </li>
             ))}
           </ul>
         </motion.div>
       )}
 
+      {/* Yaklaşan bakımlar */}
       {upcomingRecords.length > 0 && (
         <motion.div
           initial={{ opacity: 0, x: -10 }}
@@ -69,13 +144,13 @@ function SummaryBanner() {
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xl">⏰</span>
             <p className="font-bold text-yellow-400">
-              {upcomingRecords.length} {t("upcomingTitle")}
+              {upcomingRecords.length} {isEN ? "Upcoming" : "Yaklaşan"}
             </p>
           </div>
           <ul className="flex flex-col gap-1">
             {upcomingRecords.map((r) => (
               <li key={r.id} className="text-sm text-yellow-400/80">
-                • <span className="font-medium">{getPetName(r.petId)}</span> — {r.type} ({getDaysUntil(r.nextDate)} {t("daysLeft")})
+                • <span className="font-medium">{getPetName(r.petId)}</span> — {r.type} ({getDaysUntil(r.nextDate)} {isEN ? "days left" : "gün kaldı"})
               </li>
             ))}
           </ul>
