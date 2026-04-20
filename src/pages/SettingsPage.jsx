@@ -61,7 +61,7 @@ function SettingsPage() {
     }
     const result = await sendReminderEmail(emailInput, user?.name);
     if (result.success) {
-      toast.success(isEN ? "Mail app opened! 📧" : "Mail uygulaması açıldı! 📧");
+      toast.success(isEN ? "Reminder email sent! 📧" : "Hatırlatıcı email gönderildi! 📧");
     } else {
       toast.error(result.error);
     }
@@ -325,8 +325,8 @@ function SettingsPage() {
           <div className="py-2">
             <p className="text-sm text-gray-400 mb-4">
               {isEN
-                ? "Opens your mail app with reminders pre-filled. Just hit send!"
-                : "Mail uygulamanızı açar, hatırlatıcılar hazır doldurulmuş gelir. Sadece gönderin!"}
+                ? "Send yourself a reminder email for upcoming and overdue care."
+                : "Yaklaşan ve gecikmiş bakımlar için kendinize hatırlatıcı email gönderin."}
             </p>
             <div className="flex gap-2">
               <input
@@ -340,7 +340,7 @@ function SettingsPage() {
                 onClick={handleSendReminderEmail}
                 className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors flex items-center gap-2 flex-shrink-0"
               >
-                📧 {isEN ? "Open Mail" : "Mail Aç"}
+                📧 {isEN ? "Send" : "Gönder"}
               </button>
             </div>
             {hasReminders() ? (
