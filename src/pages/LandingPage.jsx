@@ -5,17 +5,16 @@ import { useTranslation } from "react-i18next";
 import { usePet } from "../context/PetContext";
 import usePageTitle from "../hooks/usePageTitle";
 
-// Scroll animasyonu için hook
 function useScrollAnimation(threshold = 0.2) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, threshold });
   return [ref, isInView];
 }
 
-// Sayaç animasyonu
 function AnimatedCounter({ target, duration = 2000, suffix = "" }) {
   const [count, setCount] = useState(0);
-  const [ref, isInView] = useScrollAnimation(0.5);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, threshold: 0.5 });
 
   useEffect(() => {
     if (!isInView) return;
@@ -36,7 +35,6 @@ function AnimatedCounter({ target, duration = 2000, suffix = "" }) {
   return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 }
 
-// PatiLogo
 const PatiLogo = ({ size = 24, color = "white" }) => (
   <svg width={size} height={size} viewBox="0 0 100 100" fill={color}>
     <ellipse cx="20" cy="30" rx="10" ry="13"/>
@@ -52,9 +50,14 @@ function LandingPage() {
   const { t } = useTranslation();
   const { language, setLanguage } = usePet();
   const [activeFeature, setActiveFeature] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   usePageTitle(null);
+
+  // Tüm hook'lar en üstte — koşulsuz
+  const [heroRef, heroInView] = useScrollAnimation(0.1);
+  const [statsRef, statsInView] = useScrollAnimation(0.2);
+  const [featuresRef, featuresInView] = useScrollAnimation(0.1);
+  const [testimonialsRef, testimonialsInView] = useScrollAnimation(0.1);
 
   useEffect(() => {
     const link = document.createElement("link");
@@ -63,21 +66,13 @@ function LandingPage() {
     document.head.appendChild(link);
   }, []);
 
-  // Otomatik feature değiştirme
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % features.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []);
-
   const features = [
     { icon: "💉", title: t("feature1Title"), desc: t("feature1Desc"), color: "from-emerald-400 to-teal-500" },
     { icon: "🪱", title: t("feature2Title"), desc: t("feature2Desc"), color: "from-blue-400 to-indigo-500" },
     { icon: "⚖️", title: t("feature3Title"), desc: t("feature3Desc"), color: "from-violet-400 to-purple-500" },
     { icon: "📄", title: t("feature4Title"), desc: t("feature4Desc"), color: "from-orange-400 to-rose-500" },
     { icon: "🔔", title: t("feature5Title"), desc: t("feature5Desc"), color: "from-pink-400 to-rose-500" },
-    { icon: "🌙", title: t("feature6Title"), desc: t("feature6Desc"), color: "from-cyan-400 to-sky-500" },
+    { icon: "📱", title: language === "tr" ? "QR Kod Paylaşımı" : "QR Code Sharing", desc: language === "tr" ? "Hayvan sağlık kartını QR kod ile veterinerinizle paylaşın." : "Share your pet's health card via QR code with your vet.", color: "from-cyan-400 to-sky-500" },
   ];
 
   const stats = [
@@ -114,10 +109,12 @@ function LandingPage() {
     },
   ];
 
-  const [heroRef, heroInView] = useScrollAnimation(0.1);
-  const [statsRef, statsInView] = useScrollAnimation(0.2);
-  const [featuresRef, featuresInView] = useScrollAnimation(0.1);
-  const [testimonialsRef, testimonialsInView] = useScrollAnimation(0.1);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveFeature((prev) => (prev + 1) % features.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [features.length]);
 
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif" }} className="min-h-screen bg-[#FAFAF7] overflow-x-hidden">
@@ -168,30 +165,17 @@ function LandingPage() {
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-6 relative overflow-hidden">
-        {/* Arka plan dekorasyon */}
         <div className="absolute top-20 right-0 w-96 h-96 bg-emerald-100 rounded-full blur-3xl opacity-50 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-100 rounded-full blur-3xl opacity-40 pointer-events-none" />
         <div className="absolute top-40 left-1/4 w-32 h-32 bg-pink-100 rounded-full blur-2xl opacity-30 pointer-events-none" />
 
-        {/* Yüzen pati ikonları */}
         {["🐾", "🐱", "🐶", "💉", "🎂", "⚖️"].map((icon, i) => (
           <motion.div
             key={i}
             className="absolute text-2xl pointer-events-none select-none opacity-20"
-            style={{
-              left: `${10 + (i * 15)}%`,
-              top: `${15 + (i % 3) * 20}%`,
-            }}
-            animate={{
-              y: [0, -15, 0],
-              rotate: [0, 10, -10, 0],
-            }}
-            transition={{
-              duration: 3 + i * 0.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 0.3,
-            }}
+            style={{ left: `${10 + (i * 15)}%`, top: `${15 + (i % 3) * 20}%` }}
+            animate={{ y: [0, -15, 0], rotate: [0, 10, -10, 0] }}
+            transition={{ duration: 3 + i * 0.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
           >
             {icon}
           </motion.div>
@@ -263,7 +247,6 @@ function LandingPage() {
         >
           <div className="absolute -inset-4 bg-gradient-to-b from-emerald-100/50 to-transparent rounded-3xl blur-xl" />
           <div className="bg-white rounded-3xl shadow-2xl border border-[#E8E8E0] overflow-hidden relative">
-            {/* App header */}
             <div className="bg-emerald-500 px-6 py-4 flex items-center gap-3">
               <div className="flex gap-1.5">
                 <div className="w-3 h-3 bg-white/30 rounded-full" />
@@ -277,9 +260,7 @@ function LandingPage() {
                 <div className="text-white font-bold text-sm">{t("appName")}</div>
               </div>
             </div>
-
             <div className="p-6">
-              {/* Uyarı banner */}
               <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 mb-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span>⏰</span>
@@ -288,8 +269,6 @@ function LandingPage() {
                 <div className="text-xs text-yellow-600">• {language === "tr" ? "Pamuk" : "Snowball"} — {t("feature1Title")} (5 {t("daysLeft")})</div>
                 <div className="text-xs text-yellow-600 mt-1">• {language === "tr" ? "Karamel" : "Caramel"} — {t("feature2Title")} (12 {t("daysLeft")})</div>
               </div>
-
-              {/* Hayvan kartları */}
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { name: language === "tr" ? "Pamuk" : "Snowball", type: language === "tr" ? "Kedi" : "Cat", age: language === "tr" ? "2 yaşında" : "2 years old", color: "from-violet-400 to-purple-500", records: 4 },
@@ -358,7 +337,6 @@ function LandingPage() {
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            {/* Sol — Feature listesi */}
             <div className="flex flex-col gap-3">
               {features.map((f, i) => (
                 <motion.button
@@ -397,7 +375,6 @@ function LandingPage() {
               ))}
             </div>
 
-            {/* Sağ — Feature detayı */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={featuresInView ? { opacity: 1, x: 0 } : {}}
@@ -501,7 +478,6 @@ function LandingPage() {
                 whileHover={{ y: -4 }}
                 className="bg-[#FAFAF7] rounded-3xl p-6 border border-[#E8E8E0] shadow-sm transition-shadow hover:shadow-md"
               >
-                {/* Yıldızlar */}
                 <div className="flex gap-1 mb-4">
                   {Array(item.rating).fill(0).map((_, j) => (
                     <span key={j} className="text-yellow-400 text-sm">⭐</span>
@@ -532,7 +508,6 @@ function LandingPage() {
             viewport={{ once: true }}
             className="bg-[#2D2D2D] rounded-3xl p-12 relative overflow-hidden"
           >
-            {/* Dekorasyon */}
             <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl" />
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl" />
 
