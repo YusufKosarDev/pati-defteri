@@ -11,13 +11,11 @@ function SummaryBanner() {
   const isEN = i18n.language === "en";
   const { fireConfetti } = useConfetti();
 
-  if (pets.length === 0) return null;
-
+  // Tüm hesaplamalar hook'lardan sonra
   const overdueRecords = records.filter((r) => r.nextDate && isOverdue(r.nextDate));
   const upcomingRecords = records.filter((r) => r.nextDate && isUpcoming(r.nextDate));
   const getPetName = (petId) => pets.find((p) => p.id === petId)?.name || "";
 
-  // Doğum günleri
   const birthdayPets = pets
     .map((pet) => ({ pet, status: getBirthdayStatus(pet.birthDate) }))
     .filter(({ status }) => status !== null);
@@ -25,12 +23,16 @@ function SummaryBanner() {
   const todayBirthdays = birthdayPets.filter(({ status }) => status.type === "today");
   const upcomingBirthdays = birthdayPets.filter(({ status }) => status.type === "upcoming");
 
-  // Bugün doğum günü varsa konfeti
+  // useEffect her zaman çağrılmalı — koşul içinde değil
   useEffect(() => {
     if (todayBirthdays.length > 0) {
-      setTimeout(fireConfetti, 500);
+      const timer = setTimeout(fireConfetti, 1000);
+      return () => clearTimeout(timer);
     }
   }, [todayBirthdays.length]);
+
+  // Early return hook'lardan SONRA
+  if (pets.length === 0) return null;
 
   const allGood = overdueRecords.length === 0 && upcomingRecords.length === 0 && todayBirthdays.length === 0 && upcomingBirthdays.length === 0;
 
@@ -60,7 +62,6 @@ function SummaryBanner() {
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col gap-3 mb-6"
     >
-      {/* Bugün doğum günü */}
       {todayBirthdays.map(({ pet, status }) => (
         <motion.div
           key={pet.id}
@@ -82,7 +83,6 @@ function SummaryBanner() {
         </motion.div>
       ))}
 
-      {/* Yaklaşan doğum günleri */}
       {upcomingBirthdays.length > 0 && (
         <motion.div
           initial={{ opacity: 0, x: -10 }}
@@ -109,7 +109,6 @@ function SummaryBanner() {
         </motion.div>
       )}
 
-      {/* Gecikmiş bakımlar */}
       {overdueRecords.length > 0 && (
         <motion.div
           initial={{ opacity: 0, x: -10 }}
@@ -133,7 +132,6 @@ function SummaryBanner() {
         </motion.div>
       )}
 
-      {/* Yaklaşan bakımlar */}
       {upcomingRecords.length > 0 && (
         <motion.div
           initial={{ opacity: 0, x: -10 }}

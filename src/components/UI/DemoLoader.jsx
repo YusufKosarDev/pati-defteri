@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { usePet } from "../../context/PetContext";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
@@ -13,13 +13,13 @@ const DEMO_DATA_TR = {
       birthDate: "2022-03-15",
       photo: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&h=200&fit=crop",
       notes: "Çok sevecen, oyun sever.",
-      vet: {
+      vets: [{
         clinicName: "Dostlar Veteriner Kliniği",
         doctorName: "Dr. Ayşe Yılmaz",
         phone: "0532 123 45 67",
         address: "Kadıköy, İstanbul",
         notes: "Acil durumda ara",
-      },
+      }],
     },
     {
       id: "demo_pet_2",
@@ -29,13 +29,13 @@ const DEMO_DATA_TR = {
       birthDate: "2021-07-20",
       photo: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&h=200&fit=crop",
       notes: "Çok enerjik, parkta oynamayı sever.",
-      vet: {
+      vets: [{
         clinicName: "Pati Veteriner Merkezi",
         doctorName: "Dr. Mehmet Kaya",
         phone: "0533 987 65 43",
         address: "Beşiktaş, İstanbul",
         notes: "Salı günleri kapalı",
-      },
+      }],
     },
   ],
   records: [
@@ -70,13 +70,13 @@ const DEMO_DATA_EN = {
       birthDate: "2022-03-15",
       photo: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&h=200&fit=crop",
       notes: "Very affectionate and playful.",
-      vet: {
+      vets: [{
         clinicName: "Happy Paws Veterinary Clinic",
         doctorName: "Dr. Sarah Johnson",
         phone: "555-123-4567",
         address: "123 Main St, New York",
         notes: "Call in emergencies",
-      },
+      }],
     },
     {
       id: "demo_pet_2",
@@ -86,13 +86,13 @@ const DEMO_DATA_EN = {
       birthDate: "2021-07-20",
       photo: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&h=200&fit=crop",
       notes: "Very energetic, loves playing in the park.",
-      vet: {
+      vets: [{
         clinicName: "Paws & Claws Animal Hospital",
         doctorName: "Dr. Michael Brown",
         phone: "555-987-6543",
         address: "456 Oak Ave, New York",
         notes: "Closed on Tuesdays",
-      },
+      }],
     },
   ],
   records: [
@@ -125,11 +125,13 @@ function DemoLoader({ onClose }) {
   const DEMO_DATA = isEN ? DEMO_DATA_EN : DEMO_DATA_TR;
 
   const handleLoadDemo = () => {
-    setPets(DEMO_DATA.pets);
-    setRecords(DEMO_DATA.records);
-    setWeights(DEMO_DATA.weights);
-    toast.success(isEN ? "Demo data loaded! 🐾" : "Demo veriler yüklendi! 🐾");
     onClose();
+    setTimeout(() => {
+      setPets(DEMO_DATA.pets);
+      setRecords(DEMO_DATA.records);
+      setWeights(DEMO_DATA.weights);
+      toast.success(isEN ? "Demo data loaded! 🐾" : "Demo veriler yüklendi! 🐾");
+    }, 100);
   };
 
   const items = isEN ? [
