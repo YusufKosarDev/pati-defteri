@@ -15,6 +15,7 @@ const HomePage = lazy(() => import("./pages/HomePage"));
 const PetDetailPage = lazy(() => import("./pages/PetDetailPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const CalendarPage = lazy(() => import("./pages/CalendarPage"));
+const StatsPage = lazy(() => import("./pages/StatsPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
@@ -92,12 +93,8 @@ function AppRoutes() {
       <Suspense fallback={<PageLoader />}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
-            <Route path="/" element={
-              <PageTransition><LandingPage /></PageTransition>
-            } />
-            <Route path="/auth" element={
-              <PageTransition><AuthPage /></PageTransition>
-            } />
+            <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+            <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
             <Route path="/app" element={
               <ProtectedRoute>
                 <PageTransition>
@@ -112,6 +109,11 @@ function AppRoutes() {
                 <PetDetailWrapper tabMemory={tabMemory} setTabMemory={setTabMemory} />
               </ProtectedRoute>
             } />
+            <Route path="/stats" element={
+              <ProtectedRoute>
+                <PageTransition><StatsPage /></PageTransition>
+              </ProtectedRoute>
+            } />
             <Route path="/settings" element={
               <ProtectedRoute>
                 <PageTransition><SettingsPage /></PageTransition>
@@ -122,9 +124,7 @@ function AppRoutes() {
                 <PageTransition><CalendarPage /></PageTransition>
               </ProtectedRoute>
             } />
-            <Route path="*" element={
-              <PageTransition><NotFoundPage /></PageTransition>
-            } />
+            <Route path="*" element={<PageTransition><NotFoundPage /></PageTransition>} />
           </Routes>
         </AnimatePresence>
       </Suspense>

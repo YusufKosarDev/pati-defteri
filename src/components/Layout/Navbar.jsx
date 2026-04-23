@@ -32,6 +32,14 @@ const CalendarIcon = () => (
   </svg>
 );
 
+const StatsIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10"/>
+    <line x1="12" y1="20" x2="12" y2="4"/>
+    <line x1="6" y1="20" x2="6" y2="14"/>
+  </svg>
+);
+
 const SettingsIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="3"/>
@@ -84,6 +92,7 @@ function Navbar({ searchOpen, setSearchOpen }) {
 
   const navLinks = [
     { path: "/app", label: t("myPets"), icon: <HomeIcon /> },
+    { path: "/stats", label: isEN ? "Statistics" : "İstatistikler", icon: <StatsIcon /> },
     { path: "/calendar", label: isEN ? "Calendar" : "Takvim", icon: <CalendarIcon /> },
     { path: "/settings", label: t("settings"), icon: <SettingsIcon /> },
   ];
@@ -126,7 +135,6 @@ function Navbar({ searchOpen, setSearchOpen }) {
           <span className="text-white font-semibold text-sm tracking-tight">{t("appName")}</span>
         </button>
 
-        {/* Arama */}
         <div className="px-3 pt-3">
           <button
             onClick={() => setSearchOpen(true)}
@@ -293,7 +301,6 @@ function Navbar({ searchOpen, setSearchOpen }) {
         )}
       </AnimatePresence>
 
-      {/* Misafir çıkış onayı */}
       <ConfirmModal
         isOpen={logoutConfirm}
         onClose={() => setLogoutConfirm(false)}

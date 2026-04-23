@@ -74,27 +74,22 @@ function HomePage({ onSelectPet }) {
 
   if (loading) return <PageSkeleton />;
 
-  // İstatistikler
   const overdueRecords = records.filter((r) => r.nextDate && isOverdue(r.nextDate));
   const upcomingRecords = records.filter((r) => r.nextDate && isUpcoming(r.nextDate));
   const overdueCount = overdueRecords.length;
   const upcomingCount = upcomingRecords.length;
 
-  // En yakın bakım
   const nextCare = records
     .filter((r) => r.nextDate && !isOverdue(r.nextDate))
     .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate))[0];
   const nextCarePet = nextCare ? pets.find((p) => p.id === nextCare.petId) : null;
   const nextCareDays = nextCare ? getDaysUntil(nextCare.nextDate) : null;
 
-  // En son eklenen kayıt
   const lastRecord = [...records].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
   const lastRecordPet = lastRecord ? pets.find((p) => p.id === lastRecord.petId) : null;
 
-  // Toplam ağırlık kaydı
   const totalWeights = weights.length;
 
-  // Quick insights
   const insights = [];
   if (overdueCount > 0) {
     insights.push({
@@ -129,7 +124,11 @@ function HomePage({ onSelectPet }) {
       value: pets.length,
       color: "bg-emerald-500/10",
       delay: 0.1,
-      sub: pets.length > 0 ? (isEN ? `${pets.filter(p => p.type === "Kedi" || p.type === "Cat").length} cat, ${pets.filter(p => p.type === "Köpek" || p.type === "Dog").length} dog` : `${pets.filter(p => p.type === "Kedi" || p.type === "Cat").length} kedi, ${pets.filter(p => p.type === "Köpek" || p.type === "Dog").length} köpek`) : null,
+      sub: pets.length > 0
+        ? isEN
+          ? `${pets.filter(p => p.type === "Kedi" || p.type === "Cat").length} cat, ${pets.filter(p => p.type === "Köpek" || p.type === "Dog").length} dog`
+          : `${pets.filter(p => p.type === "Kedi" || p.type === "Cat").length} kedi, ${pets.filter(p => p.type === "Köpek" || p.type === "Dog").length} köpek`
+        : null,
     },
     {
       icon: "💉",
@@ -137,7 +136,11 @@ function HomePage({ onSelectPet }) {
       value: records.length,
       color: "bg-blue-500/10",
       delay: 0.15,
-      sub: records.length > 0 ? (isEN ? `avg ${(records.length / Math.max(pets.length, 1)).toFixed(1)} per pet` : `pet başına ort. ${(records.length / Math.max(pets.length, 1)).toFixed(1)}`) : null,
+      sub: records.length > 0
+        ? isEN
+          ? `avg ${(records.length / Math.max(pets.length, 1)).toFixed(1)} per pet`
+          : `pet başına ort. ${(records.length / Math.max(pets.length, 1)).toFixed(1)}`
+        : null,
     },
     {
       icon: "⏰",
@@ -145,7 +148,9 @@ function HomePage({ onSelectPet }) {
       value: upcomingCount,
       color: "bg-yellow-500/10",
       delay: 0.2,
-      sub: upcomingCount > 0 ? (isEN ? "within 30 days" : "30 gün içinde") : (isEN ? "all clear!" : "hepsi tamam!"),
+      sub: upcomingCount > 0
+        ? (isEN ? "within 30 days" : "30 gün içinde")
+        : (isEN ? "all clear!" : "hepsi tamam!"),
     },
     {
       icon: "⚠️",
@@ -153,7 +158,9 @@ function HomePage({ onSelectPet }) {
       value: overdueCount,
       color: overdueCount > 0 ? "bg-red-500/10" : "bg-gray-800",
       delay: 0.25,
-      sub: overdueCount > 0 ? (isEN ? "needs attention" : "ilgi gerektiriyor") : (isEN ? "nothing overdue" : "gecikmiş yok"),
+      sub: overdueCount > 0
+        ? (isEN ? "needs attention" : "ilgi gerektiriyor")
+        : (isEN ? "nothing overdue" : "gecikmiş yok"),
     },
     {
       icon: "⚖️",
@@ -161,7 +168,9 @@ function HomePage({ onSelectPet }) {
       value: totalWeights,
       color: "bg-violet-500/10",
       delay: 0.3,
-      sub: totalWeights > 0 ? (isEN ? `for ${pets.length} pet${pets.length > 1 ? "s" : ""}` : `${pets.length} hayvan için`) : null,
+      sub: totalWeights > 0
+        ? (isEN ? `for ${pets.length} pet${pets.length > 1 ? "s" : ""}` : `${pets.length} hayvan için`)
+        : null,
     },
     {
       icon: "📅",
@@ -202,14 +211,12 @@ function HomePage({ onSelectPet }) {
 
         {pets.length > 0 && (
           <>
-            {/* İstatistik kartları */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
               {stats.map((s) => (
                 <StatCard key={s.label} {...s} />
               ))}
             </div>
 
-            {/* Quick insights */}
             {insights.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
