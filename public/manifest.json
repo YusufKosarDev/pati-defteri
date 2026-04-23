@@ -1,17 +1,57 @@
 {
-  "name": "PatiDefteri",
+  "name": "PatiDefteri — Evcil Hayvan Bakım Günlüğü",
   "short_name": "PatiDefteri",
-  "description": "Evcil Hayvan Bakım Günlüğü",
-  "start_url": "/",
+  "description": "Evcil hayvanlarınızın aşı, bakım ve sağlık geçmişini takip edin.",
+  "start_url": "/app",
   "display": "standalone",
-  "background_color": "#FAFAF7",
+  "background_color": "#030712",
   "theme_color": "#10b981",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "lang": "tr",
+  "categories": ["health", "lifestyle"],
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "64x64",
-      "type": "image/x-icon"
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Ana Sayfa"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Hayvanlarım",
+      "short_name": "Hayvanlar",
+      "description": "Hayvan listesine git",
+      "url": "/app",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Takvim",
+      "short_name": "Takvim",
+      "description": "Aşı takvimine git",
+      "url": "/calendar",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     }
   ]
 }
