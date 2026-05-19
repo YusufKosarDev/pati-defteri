@@ -16,7 +16,7 @@ function SettingsPage() {
   const { user, updateProfile } = useAuth();
   const replaceAll = useMutation(api.backup.replaceAll);
   const { t, i18n } = useTranslation();
-  const { permission, requestPermission, checkAndNotify, isSupported } = useNotifications(pets, records);
+  const { permission, requestPermission, sendTest, isSupported } = useNotifications();
   const { sendReminderEmail, hasReminders } = useEmailReminder(pets, records);
   const isEN = i18n.language === "en";
 
@@ -29,17 +29,35 @@ function SettingsPage() {
 
   const handleNotificationToggle = async () => {
     if (!isSupported) { toast.error(t("toastNotificationDenied")); return; }
-    if (permission === "denied") { toast.error("Tarayıcı ayarlarından izni sıfırlayın."); return; }
+    if (permission === "denied") {
+      toast.error(isEN ? "Reset permission from browser settings." : "Tarayıcı ayarlarından izni sıfırlayın.");
+      return;
+    }
     if (permission === "granted") { toast(t("pushNotificationsDesc"), { icon: "ℹ️" }); return; }
     const result = await requestPermission();
-    if (result === "granted") { toast.success(t("toastNotificationOn")); checkAndNotify(); }
-    else { toast.error(t("toastNotificationDenied")); }
+    if (result === "granted") {
+      toast.success(t("toastNotificationOn"));
+    } else {
+      toast.error(t("toastNotificationDenied"));
+    }
   };
 
-  const handleTestNotification = () => {
-    if (permission !== "granted") { toast.error("Önce bildirim iznini açın!"); return; }
-    new Notification(t("appName"), { body: t("pushNotificationsDesc"), icon: "/favicon.ico" });
-    toast.success(t("toastTestSent"));
+  const handleTestNotification = async () => {
+    if (permission !== "granted") {
+      toast.error(isEN ? "Enable notifications first!" : "Önce bildirim iznini açın!");
+      return;
+    }
+    try {
+      const res = await sendTest();
+      if (res?.sent > 0) {
+        toast.success(t("toastTestSent"));
+      } else {
+        toast.error(isEN ? "Push could not be delivered." : "Push iletilmedi.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(isEN ? "Push failed." : "Push başarısız.");
+    }
   };
 
   const handleSendReminderEmail = async () => {

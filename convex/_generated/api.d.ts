@@ -10,10 +10,15 @@
 
 import type * as auth from "../auth.js";
 import type * as backup from "../backup.js";
+import type * as crons from "../crons.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as pets from "../pets.js";
+import type * as push from "../push.js";
+import type * as pushInternal from "../pushInternal.js";
 import type * as records from "../records.js";
+import type * as reminders from "../reminders.js";
+import type * as remindersInternal from "../remindersInternal.js";
 import type * as users from "../users.js";
 import type * as weights from "../weights.js";
 
@@ -26,10 +31,15 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   backup: typeof backup;
+  crons: typeof crons;
   files: typeof files;
   http: typeof http;
   pets: typeof pets;
+  push: typeof push;
+  pushInternal: typeof pushInternal;
   records: typeof records;
+  reminders: typeof reminders;
+  remindersInternal: typeof remindersInternal;
   users: typeof users;
   weights: typeof weights;
 }>;

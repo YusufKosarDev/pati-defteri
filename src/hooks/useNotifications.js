@@ -1,24 +1,68 @@
 import { useEffect, useState } from "react";
-import i18n from "../i18n/index.js";
-import { isOverdue, isUpcoming, getDaysUntil } from "../utils/dateHelpers";
+import { useAction } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
-function useNotifications(pets, records) {
-  const isSupported = "Notification" in window;
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  const output = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; ++i) output[i] = raw.charCodeAt(i);
+  return output;
+}
+
+function subscriptionToJSON(sub) {
+  const json = sub.toJSON();
+  return {
+    endpoint: json.endpoint,
+    keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+  };
+}
+
+function useNotifications() {
+  const isSupported =
+    typeof window !== "undefined" &&
+    "Notification" in window &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window;
 
   const [permission, setPermission] = useState(
     isSupported ? Notification.permission : "denied"
   );
 
+  const saveSubscription = useAction(api.push.saveSubscription);
+  const removeSubscription = useAction(api.push.removeSubscription);
+  const sendTestPush = useAction(api.push.sendTestPush);
+
   useEffect(() => {
     if (!isSupported) return;
     setPermission(Notification.permission);
-  }, []);
+  }, [isSupported]);
+
+  async function ensureSubscribed() {
+    if (!isSupported || !VAPID_PUBLIC_KEY) return null;
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+    await saveSubscription(subscriptionToJSON(sub));
+    return sub;
+  }
 
   const requestPermission = async () => {
     if (!isSupported) return "denied";
     try {
       const result = await Notification.requestPermission();
       setPermission(result);
+      if (result === "granted") {
+        await ensureSubscribed();
+      }
       return result;
     } catch (err) {
       console.error("Bildirim izni alınamadı:", err);
@@ -26,61 +70,28 @@ function useNotifications(pets, records) {
     }
   };
 
-  const sendNotification = (title, body) => {
-    if (!isSupported || Notification.permission !== "granted") return;
-    try {
-      new Notification(title, {
-        body,
-        icon: "/favicon.ico",
-        tag: title,
-      });
-    } catch (err) {
-      console.error("Bildirim gönderilemedi:", err);
+  const unsubscribe = async () => {
+    if (!isSupported) return;
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      await removeSubscription({ endpoint: sub.endpoint });
+      await sub.unsubscribe();
     }
   };
 
-  const checkAndNotify = () => {
-    if (!isSupported || Notification.permission !== "granted") return;
-
-    const isEN = i18n.language === "en";
-    const overdueRecords = records.filter((r) => r.nextDate && isOverdue(r.nextDate));
-    const upcomingRecords = records.filter((r) => r.nextDate && isUpcoming(r.nextDate, 7));
-
-    overdueRecords.forEach((r) => {
-      const pet = pets.find((p) => p.id === r.petId);
-      if (!pet) return;
-      const days = Math.abs(getDaysUntil(r.nextDate));
-      const title = isEN
-        ? `${pet.name} - Overdue Care!`
-        : `${pet.name} - Gecikmiş Bakım!`;
-      const body = isEN
-        ? `${r.type} is ${days} day${days !== 1 ? "s" : ""} overdue. Please contact your vet.`
-        : `${r.type} için ${days} gün geçti. Lütfen veterinerinizi arayın.`;
-      sendNotification(title, body);
-    });
-
-    upcomingRecords.forEach((r) => {
-      const pet = pets.find((p) => p.id === r.petId);
-      if (!pet) return;
-      const days = getDaysUntil(r.nextDate);
-      const title = isEN
-        ? `${pet.name} - Upcoming Care`
-        : `${pet.name} - Yaklaşan Bakım`;
-      const body = isEN
-        ? `${r.type} ${days === 0 ? "today!" : `in ${days} day${days !== 1 ? "s" : ""}.`}`
-        : `${r.type} için ${days === 0 ? "bugün!" : `${days} gün kaldı.`}`;
-      sendNotification(title, body);
-    });
+  const sendTest = async () => {
+    await ensureSubscribed();
+    return await sendTestPush({});
   };
 
-  useEffect(() => {
-    if (permission !== "granted") return;
-    checkAndNotify();
-    const interval = setInterval(checkAndNotify, 6 * 60 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [permission, records]);
-
-  return { permission, requestPermission, checkAndNotify, isSupported };
+  return {
+    permission,
+    isSupported: isSupported && !!VAPID_PUBLIC_KEY,
+    requestPermission,
+    unsubscribe,
+    sendTest,
+  };
 }
 
 export default useNotifications;
