@@ -95,6 +95,16 @@
 | react-hot-toast | Bildirimler |
 
 
+## 🧑‍💻 Lokal Geliştirme
+
+```bash
+npm install
+npx convex dev   # ilk çalıştırmada login + proje yaratır, .env.local'i doldurur
+npm run dev      # ayrı terminalde Vite dev server
+```
+
+`.env.example` dosyasını referans alarak gerekli değişkenleri `.env.local`'e geçir.
+
 ## 👨‍💻 Geliştirici
 
 **Yusuf Koşar**
