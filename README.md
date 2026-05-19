@@ -19,6 +19,12 @@
 ### 🐶 Hayvan Detay — Kayıtlar
 ![Hayvan Detay](screenshot-detail.png)
 
+### 📊 İstatistikler
+![İstatistikler](screenshot-stats.png)
+
+### 📅 Aşı Takvimi
+![Takvim](screenshot-calendar.png)
+
 ### ⚙️ Ayarlar
 ![Ayarlar](screenshot-settings.png)
 
