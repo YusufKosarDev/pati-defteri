@@ -1,6 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Toaster } from 'react-hot-toast'
+import { ConvexAuthProvider } from '@convex-dev/auth/react'
+import { convex } from './lib/convex.js'
 import './index.css'
 import './i18n/index.js'
 import App from './App.jsx'
@@ -15,7 +17,8 @@ if ("serviceWorker" in navigator) {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <ConvexAuthProvider client={convex}>
+        <App />
       <Toaster
         position="bottom-right"
         toastOptions={{
@@ -48,6 +51,7 @@ createRoot(document.getElementById('root')).render(
           },
         }}
       />
+      </ConvexAuthProvider>
     </ErrorBoundary>
   </StrictMode>,
 )

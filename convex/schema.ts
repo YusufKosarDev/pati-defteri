@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 const vetObject = v.object({
   clinicName: v.optional(v.string()),
@@ -10,6 +11,8 @@ const vetObject = v.object({
 });
 
 export default defineSchema({
+  ...authTables,
+
   pets: defineTable({
     userId: v.string(),
     name: v.string(),
