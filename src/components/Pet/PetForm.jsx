@@ -1,10 +1,12 @@
 import { useState, useRef } from "react";
+import { useMutation } from "convex/react";
 import { useTranslation } from "react-i18next";
 import { usePet } from "../../context/PetContext";
 import useConfetti from "../../hooks/useConfetti";
 import Button from "../UI/Button";
+import { api } from "../../../convex/_generated/api";
 
-const compressImage = (file, maxWidth = 400, quality = 0.7) => {
+const compressImageToBlob = (file, maxWidth = 400, quality = 0.75) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -13,20 +15,19 @@ const compressImage = (file, maxWidth = 400, quality = 0.7) => {
         const canvas = document.createElement("canvas");
         let width = img.width;
         let height = img.height;
-
         if (width > maxWidth) {
           height = (height * maxWidth) / width;
           width = maxWidth;
         }
-
         canvas.width = width;
         canvas.height = height;
-
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
-
-        const compressed = canvas.toDataURL("image/jpeg", quality);
-        resolve(compressed);
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error("Sıkıştırma başarısız"))),
+          "image/jpeg",
+          quality
+        );
       };
       img.onerror = reject;
       img.src = e.target.result;
@@ -38,25 +39,28 @@ const compressImage = (file, maxWidth = 400, quality = 0.7) => {
 
 function PetForm({ onClose, existingPet = null }) {
   const { addPet, updatePet, pets } = usePet();
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const { t, i18n } = useTranslation();
   const { fireConfetti, fireStar } = useConfetti();
   const isEN = i18n.language === "en";
   const fileInputRef = useRef(null);
-  const [compressing, setCompressing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const initialPhotoIsUrl =
+    existingPet?.photo && !existingPet.photo.startsWith("data:") && !existingPet.photoStorageId;
 
   const [form, setForm] = useState({
     name: existingPet?.name || "",
     type: existingPet?.type || t("petCat"),
     breed: existingPet?.breed || "",
     birthDate: existingPet?.birthDate || "",
-    photo: existingPet?.photo || "",
+    photo: initialPhotoIsUrl ? existingPet.photo : "",
+    photoStorageId: existingPet?.photoStorageId || undefined,
     notes: existingPet?.notes || "",
   });
 
   const [photoPreview, setPhotoPreview] = useState(existingPet?.photo || "");
-  const [photoMode, setPhotoMode] = useState(
-    existingPet?.photo?.startsWith("http") ? "url" : "file"
-  );
+  const [photoMode, setPhotoMode] = useState(initialPhotoIsUrl ? "url" : "file");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -64,7 +68,7 @@ function PetForm({ onClose, existingPet = null }) {
 
   const handlePhotoURL = (e) => {
     const url = e.target.value;
-    setForm({ ...form, photo: url });
+    setForm({ ...form, photo: url, photoStorageId: undefined });
     setPhotoPreview(url);
   };
 
@@ -77,24 +81,30 @@ function PetForm({ onClose, existingPet = null }) {
       return;
     }
 
-    setCompressing(true);
+    setUploading(true);
     try {
-      const compressed = await compressImage(file, 400, 0.75);
-      setForm({ ...form, photo: compressed });
-      setPhotoPreview(compressed);
+      const blob = await compressImageToBlob(file, 400, 0.75);
+      const uploadUrl = await generateUploadUrl();
+      const result = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": blob.type },
+        body: blob,
+      });
+      if (!result.ok) throw new Error(`Upload failed: ${result.status}`);
+      const { storageId } = await result.json();
 
-      const originalKB = Math.round(file.size / 1024);
-      const compressedKB = Math.round((compressed.length * 3) / 4 / 1024);
-      console.info(`Photo compressed: ${originalKB}KB → ${compressedKB}KB`);
-    } catch {
-      alert(isEN ? "Could not process image." : "Fotoğraf işlenemedi.");
+      setForm({ ...form, photoStorageId: storageId, photo: "" });
+      setPhotoPreview(URL.createObjectURL(blob));
+    } catch (err) {
+      console.error(err);
+      alert(isEN ? "Could not upload photo." : "Fotoğraf yüklenemedi.");
     } finally {
-      setCompressing(false);
+      setUploading(false);
     }
   };
 
   const handleRemovePhoto = () => {
-    setForm({ ...form, photo: "" });
+    setForm({ ...form, photo: "", photoStorageId: undefined });
     setPhotoPreview("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -103,18 +113,28 @@ function PetForm({ onClose, existingPet = null }) {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith("image/")) {
-      const fakeEvent = { target: { files: [file] } };
-      await handleFileChange(fakeEvent);
+      await handleFileChange({ target: { files: [file] } });
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name) return;
+
+    const payload = {
+      name: form.name,
+      type: form.type,
+      breed: form.breed || undefined,
+      birthDate: form.birthDate || undefined,
+      photo: form.photo || undefined,
+      photoStorageId: form.photoStorageId || undefined,
+      notes: form.notes || undefined,
+    };
+
     if (existingPet) {
-      updatePet(existingPet.id, form);
+      await updatePet(existingPet.id, payload);
     } else {
-      addPet(form);
+      await addPet(payload);
       if (pets.length === 0) {
         setTimeout(fireConfetti, 300);
       } else {
@@ -153,7 +173,6 @@ function PetForm({ onClose, existingPet = null }) {
         <input name="birthDate" type="date" value={form.birthDate} onChange={handleChange} className={inputClass} />
       </div>
 
-      {/* Fotoğraf */}
       <div>
         <label className={labelClass}>{t("petPhoto")}</label>
 
@@ -191,15 +210,15 @@ function PetForm({ onClose, existingPet = null }) {
           <div
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
-            onClick={() => !compressing && fileInputRef.current?.click()}
+            onClick={() => !uploading && fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${
-              compressing ? "border-emerald-400 bg-emerald-950/20" : "border-gray-700 hover:border-emerald-500"
+              uploading ? "border-emerald-400 bg-emerald-950/20" : "border-gray-700 hover:border-emerald-500"
             }`}
           >
-            {compressing ? (
+            {uploading ? (
               <div className="flex flex-col items-center gap-2">
                 <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-xs text-emerald-400">{isEN ? "Compressing..." : "Sıkıştırılıyor..."}</p>
+                <p className="text-xs text-emerald-400">{isEN ? "Uploading..." : "Yükleniyor..."}</p>
               </div>
             ) : (
               <>
@@ -219,7 +238,7 @@ function PetForm({ onClose, existingPet = null }) {
         ) : (
           <input
             name="photo"
-            value={form.photo?.startsWith("data:") ? "" : form.photo}
+            value={form.photo || ""}
             onChange={handlePhotoURL}
             className={inputClass}
             placeholder="https://..."
@@ -234,7 +253,7 @@ function PetForm({ onClose, existingPet = null }) {
 
       <div className="flex gap-2 justify-end mt-2">
         <Button variant="secondary" onClick={onClose}>{t("cancel")}</Button>
-        <Button type="submit" disabled={compressing}>
+        <Button type="submit" disabled={uploading}>
           {existingPet ? t("update") : t("add")}
         </Button>
       </div>

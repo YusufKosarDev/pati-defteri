@@ -20,6 +20,7 @@ export default defineSchema({
     breed: v.optional(v.string()),
     birthDate: v.optional(v.string()),
     photo: v.optional(v.string()),
+    photoStorageId: v.optional(v.id("_storage")),
     notes: v.optional(v.string()),
     vets: v.optional(v.array(vetObject)),
   }).index("by_user", ["userId"]),

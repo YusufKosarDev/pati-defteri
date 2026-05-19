@@ -25,15 +25,24 @@ async function requireOwnedPet(ctx, petId) {
   return { userId, pet };
 }
 
+async function attachPhotoUrl(ctx, pet) {
+  if (pet.photoStorageId) {
+    const url = await ctx.storage.getUrl(pet.photoStorageId);
+    return { ...pet, photoUrl: url };
+  }
+  return { ...pet, photoUrl: pet.photo ?? null };
+}
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    return await ctx.db
+    const rows = await ctx.db
       .query("pets")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
+    return await Promise.all(rows.map((p) => attachPhotoUrl(ctx, p)));
   },
 });
 
@@ -44,6 +53,7 @@ export const create = mutation({
     breed: v.optional(v.string()),
     birthDate: v.optional(v.string()),
     photo: v.optional(v.string()),
+    photoStorageId: v.optional(v.id("_storage")),
     notes: v.optional(v.string()),
     vets: v.optional(v.array(vetArg)),
   },
@@ -61,6 +71,7 @@ export const update = mutation({
     breed: v.optional(v.string()),
     birthDate: v.optional(v.string()),
     photo: v.optional(v.string()),
+    photoStorageId: v.optional(v.id("_storage")),
     notes: v.optional(v.string()),
     vets: v.optional(v.array(vetArg)),
   },
@@ -73,7 +84,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("pets") },
   handler: async (ctx, { id }) => {
-    await requireOwnedPet(ctx, id);
+    const { pet } = await requireOwnedPet(ctx, id);
 
     const records = await ctx.db
       .query("records")
@@ -86,6 +97,10 @@ export const remove = mutation({
       .withIndex("by_pet", (q) => q.eq("petId", id))
       .collect();
     for (const w of weights) await ctx.db.delete(w._id);
+
+    if (pet.photoStorageId) {
+      await ctx.storage.delete(pet.photoStorageId);
+    }
 
     await ctx.db.delete(id);
   },

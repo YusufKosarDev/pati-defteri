@@ -92,10 +92,14 @@ export function PetProvider({ children }) {
   const getWeightsByPet = (petId) =>
     (weights ?? []).filter((w) => w.petId === petId);
 
-  // Geriye dönük uyumluluk: tüketiciler `id` field'ını okuyor.
-  // Convex `_id` veriyor, alias olarak `id` ekleyelim.
+  // Geriye dönük uyumluluk: tüketiciler `id` ve `photo` field'larını okuyor.
+  // Convex `_id` veriyor; photoUrl varsa onu pet.photo'nun yerine geçir.
   const adapt = (rows) =>
-    (rows ?? []).map((r) => ({ ...r, id: r._id }));
+    (rows ?? []).map((r) => ({
+      ...r,
+      id: r._id,
+      photo: r.photoUrl ?? r.photo ?? "",
+    }));
 
   return (
     <PetContext.Provider
