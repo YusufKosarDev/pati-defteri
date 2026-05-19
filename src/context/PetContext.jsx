@@ -1,20 +1,32 @@
 import { createContext, useContext, useEffect } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "./AuthContext";
 import useLocalStorage from "../hooks/useLocalStorage";
 import toast from "react-hot-toast";
 import i18n from "../i18n/index.js";
+import { api } from "../../convex/_generated/api";
 
 const PetContext = createContext();
 
 export function PetProvider({ children }) {
-  const { user } = useAuth();
+  const { isAuthenticated } = useAuth();
 
-  const storage = user?.isGuest ? sessionStorage : localStorage;
-  const prefix = user?.id || "guest";
+  const pets = useQuery(api.pets.list, isAuthenticated ? {} : "skip");
+  const records = useQuery(api.records.listForUser, isAuthenticated ? {} : "skip");
+  const weights = useQuery(api.weights.listForUser, isAuthenticated ? {} : "skip");
 
-  const [pets, setPets] = useLocalStorage(`pets_${prefix}`, [], storage);
-  const [records, setRecords] = useLocalStorage(`records_${prefix}`, [], storage);
-  const [weights, setWeights] = useLocalStorage(`weights_${prefix}`, [], storage);
+  const createPet = useMutation(api.pets.create);
+  const updatePetMut = useMutation(api.pets.update);
+  const removePet = useMutation(api.pets.remove);
+
+  const createRecord = useMutation(api.records.create);
+  const updateRecordMut = useMutation(api.records.update);
+  const removeRecord = useMutation(api.records.remove);
+  const reorderRecordsMut = useMutation(api.records.reorder);
+
+  const createWeight = useMutation(api.weights.create);
+  const removeWeight = useMutation(api.weights.remove);
+
   const [language, setLanguage] = useLocalStorage("language", "tr", localStorage);
 
   useEffect(() => {
@@ -27,63 +39,86 @@ export function PetProvider({ children }) {
 
   const isEN = () => i18n.language === "en";
 
-  const addPet = (pet) => {
-    const newPet = { ...pet, id: Date.now().toString() };
-    setPets([...pets, newPet]);
+  const addPet = async (pet) => {
+    await createPet(pet);
     toast.success(isEN() ? `${pet.name} added! 🐾` : `${pet.name} eklendi! 🐾`);
   };
 
-  const updatePet = (id, updatedPet) => {
-    setPets(pets.map((p) => (p.id === id ? { ...p, ...updatedPet } : p)));
+  const updatePet = async (id, updatedPet) => {
+    await updatePetMut({ id, ...updatedPet });
     toast.success(isEN() ? "Updated! ✅" : "Güncellendi! ✅");
   };
 
-  const deletePet = (id) => {
-    const pet = pets.find((p) => p.id === id);
-    setPets(pets.filter((p) => p.id !== id));
-    setRecords(records.filter((r) => r.petId !== id));
-    setWeights(weights.filter((w) => w.petId !== id));
+  const deletePet = async (id) => {
+    const pet = (pets ?? []).find((p) => p._id === id);
+    await removePet({ id });
     toast.success(isEN() ? `${pet?.name} deleted.` : `${pet?.name} silindi.`);
   };
 
-  const addRecord = (record) => {
-    const newRecord = { ...record, id: Date.now().toString() };
-    setRecords([...records, newRecord]);
+  const addRecord = async (record) => {
+    await createRecord(record);
     toast.success(isEN() ? "Record added! 💉" : "Kayıt eklendi! 💉");
   };
 
-  const updateRecord = (id, updatedRecord) => {
-    setRecords(records.map((r) => (r.id === id ? { ...r, ...updatedRecord } : r)));
+  const updateRecord = async (id, updatedRecord) => {
+    await updateRecordMut({ id, ...updatedRecord });
     toast.success(isEN() ? "Record updated! ✅" : "Kayıt güncellendi! ✅");
   };
 
-  const deleteRecord = (id) => {
-    setRecords(records.filter((r) => r.id !== id));
+  const deleteRecord = async (id) => {
+    await removeRecord({ id });
     toast.success(isEN() ? "Record deleted." : "Kayıt silindi.");
   };
 
-  const getRecordsByPet = (petId) => records.filter((r) => r.petId === petId);
-
-  const addWeight = (weight) => {
-    const newWeight = { ...weight, id: Date.now().toString() };
-    setWeights([...weights, newWeight]);
-    toast.success(isEN() ? `${weight.weight} kg saved! ⚖️` : `${weight.weight} kg kaydedildi! ⚖️`);
+  const reorderRecords = async (orderedIds) => {
+    await reorderRecordsMut({ orderedIds });
   };
 
-  const deleteWeight = (id) => {
-    setWeights(weights.filter((w) => w.id !== id));
+  const getRecordsByPet = (petId) =>
+    (records ?? []).filter((r) => r.petId === petId);
+
+  const addWeight = async (weight) => {
+    await createWeight(weight);
+    toast.success(
+      isEN() ? `${weight.weight} kg saved! ⚖️` : `${weight.weight} kg kaydedildi! ⚖️`
+    );
+  };
+
+  const deleteWeight = async (id) => {
+    await removeWeight({ id });
     toast.success(isEN() ? "Weight record deleted." : "Ağırlık kaydı silindi.");
   };
 
-  const getWeightsByPet = (petId) => weights.filter((w) => w.petId === petId);
+  const getWeightsByPet = (petId) =>
+    (weights ?? []).filter((w) => w.petId === petId);
+
+  // Geriye dönük uyumluluk: tüketiciler `id` field'ını okuyor.
+  // Convex `_id` veriyor, alias olarak `id` ekleyelim.
+  const adapt = (rows) =>
+    (rows ?? []).map((r) => ({ ...r, id: r._id }));
 
   return (
-    <PetContext.Provider value={{
-      pets, setPets, addPet, updatePet, deletePet,
-      records, setRecords, addRecord, updateRecord, deleteRecord, getRecordsByPet,
-      weights, setWeights, addWeight, deleteWeight, getWeightsByPet,
-      language, setLanguage,
-    }}>
+    <PetContext.Provider
+      value={{
+        pets: adapt(pets),
+        records: adapt(records),
+        weights: adapt(weights),
+        loading: pets === undefined || records === undefined || weights === undefined,
+        addPet,
+        updatePet,
+        deletePet,
+        addRecord,
+        updateRecord,
+        deleteRecord,
+        reorderRecords,
+        getRecordsByPet: (petId) => adapt(getRecordsByPet(petId)),
+        addWeight,
+        deleteWeight,
+        getWeightsByPet: (petId) => adapt(getWeightsByPet(petId)),
+        language,
+        setLanguage,
+      }}
+    >
       {children}
     </PetContext.Provider>
   );

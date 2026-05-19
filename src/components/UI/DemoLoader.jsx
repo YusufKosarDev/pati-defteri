@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { usePet } from "../../context/PetContext";
+import { useMutation } from "convex/react";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
+import { api } from "../../../convex/_generated/api";
 
 function daysFromNow(offset) {
   const d = new Date();
@@ -124,19 +125,45 @@ function buildDemoData(isEN) {
 }
 
 function DemoLoader({ onClose }) {
-  const { setPets, setRecords, setWeights } = usePet();
+  const replaceAll = useMutation(api.backup.replaceAll);
   const { i18n } = useTranslation();
   const isEN = i18n.language === "en";
 
-  const handleLoadDemo = () => {
+  const handleLoadDemo = async () => {
     onClose();
-    setTimeout(() => {
-      const DEMO_DATA = buildDemoData(isEN);
-      setPets(DEMO_DATA.pets);
-      setRecords(DEMO_DATA.records);
-      setWeights(DEMO_DATA.weights);
+    const DEMO_DATA = buildDemoData(isEN);
+
+    const petsArg = DEMO_DATA.pets.map((p) => ({
+      legacyId: p.id,
+      name: p.name,
+      type: p.type,
+      breed: p.breed,
+      birthDate: p.birthDate,
+      photo: p.photo,
+      notes: p.notes,
+      vets: p.vets,
+    }));
+    const recordsArg = DEMO_DATA.records.map((r) => ({
+      legacyPetId: r.petId,
+      type: r.type,
+      date: r.date,
+      nextDate: r.nextDate || undefined,
+      notes: r.notes || undefined,
+    }));
+    const weightsArg = DEMO_DATA.weights.map((w) => ({
+      legacyPetId: w.petId,
+      weight: w.weight,
+      date: w.date,
+      notes: w.notes || undefined,
+    }));
+
+    try {
+      await replaceAll({ pets: petsArg, records: recordsArg, weights: weightsArg });
       toast.success(isEN ? "Demo data loaded! 🐾" : "Demo veriler yüklendi! 🐾");
-    }, 100);
+    } catch (err) {
+      console.error(err);
+      toast.error(isEN ? "Could not load demo data." : "Demo veriler yüklenemedi.");
+    }
   };
 
   const items = isEN ? [

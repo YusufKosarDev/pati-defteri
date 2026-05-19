@@ -1,19 +1,36 @@
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query } from "./_generated/server";
 
-export const listByPet = query({
-  args: { petId: v.id("pets") },
-  handler: async (ctx, { petId }) => {
-    return await ctx.db
-      .query("records")
-      .withIndex("by_pet", (q) => q.eq("petId", petId))
-      .collect();
-  },
-});
+async function requireUser(ctx) {
+  const userId = await getAuthUserId(ctx);
+  if (!userId) throw new Error("Oturum açık değil.");
+  return userId;
+}
+
+async function requireOwnedRecord(ctx, recordId) {
+  const userId = await requireUser(ctx);
+  const record = await ctx.db.get(recordId);
+  if (!record || record.userId !== userId) {
+    throw new Error("Yetkisiz erişim.");
+  }
+  return { userId, record };
+}
+
+async function requireOwnedPet(ctx, petId) {
+  const userId = await requireUser(ctx);
+  const pet = await ctx.db.get(petId);
+  if (!pet || pet.userId !== userId) {
+    throw new Error("Yetkisiz erişim.");
+  }
+  return userId;
+}
 
 export const listForUser = query({
-  args: { userId: v.string() },
-  handler: async (ctx, { userId }) => {
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     return await ctx.db
       .query("records")
       .withIndex("by_user", (q) => q.eq("userId", userId))
@@ -23,7 +40,6 @@ export const listForUser = query({
 
 export const create = mutation({
   args: {
-    userId: v.string(),
     petId: v.id("pets"),
     type: v.string(),
     date: v.string(),
@@ -31,7 +47,8 @@ export const create = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("records", args);
+    const userId = await requireOwnedPet(ctx, args.petId);
+    return await ctx.db.insert("records", { ...args, userId });
   },
 });
 
@@ -44,6 +61,7 @@ export const update = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, { id, ...patch }) => {
+    await requireOwnedRecord(ctx, id);
     await ctx.db.patch(id, patch);
   },
 });
@@ -51,18 +69,21 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("records") },
   handler: async (ctx, { id }) => {
+    await requireOwnedRecord(ctx, id);
     await ctx.db.delete(id);
   },
 });
 
 export const reorder = mutation({
-  args: {
-    petId: v.id("pets"),
-    orderedIds: v.array(v.id("records")),
-  },
+  args: { orderedIds: v.array(v.id("records")) },
   handler: async (ctx, { orderedIds }) => {
+    const userId = await requireUser(ctx);
     await Promise.all(
-      orderedIds.map((id, index) => ctx.db.patch(id, { order: index }))
+      orderedIds.map(async (id, index) => {
+        const r = await ctx.db.get(id);
+        if (!r || r.userId !== userId) return;
+        await ctx.db.patch(id, { order: index });
+      })
     );
   },
 });

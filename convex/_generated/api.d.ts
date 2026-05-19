@@ -9,6 +9,7 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as backup from "../backup.js";
 import type * as http from "../http.js";
 import type * as pets from "../pets.js";
 import type * as records from "../records.js";
@@ -23,6 +24,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  backup: typeof backup;
   http: typeof http;
   pets: typeof pets;
   records: typeof records;

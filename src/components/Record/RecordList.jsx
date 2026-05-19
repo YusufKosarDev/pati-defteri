@@ -17,7 +17,7 @@ const RECORD_TYPES_TR = ["Tümü", "Karma Aşı", "Kuduz Aşısı", "Parazit Dam
 const RECORD_TYPES_EN = ["All", "Mixed Vaccine", "Rabies Vaccine", "Parasite Drop", "Flea Medicine", "Dewormer", "Vet Visit", "Other"];
 
 function RecordList({ petId }) {
-  const { getRecordsByPet, records, setRecords } = usePet();
+  const { getRecordsByPet, reorderRecords } = usePet();
   const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
   const [addOpen, setAddOpen] = useState(false);
@@ -25,7 +25,6 @@ function RecordList({ petId }) {
   const sensors = useSensors(useSensor(PointerSensor));
 
   const RECORD_TYPES = isEN ? RECORD_TYPES_EN : RECORD_TYPES_TR;
-  const ALL_LABEL = isEN ? "All" : "Tümü";
 
   const allRecords = getRecordsByPet(petId);
   const filtered = activeFilter === "all"
@@ -33,14 +32,13 @@ function RecordList({ petId }) {
     : allRecords.filter((r) => r.type === activeFilter);
   const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIndex = sorted.findIndex((r) => r.id === active.id);
     const newIndex = sorted.findIndex((r) => r.id === over.id);
     const reordered = arrayMove(sorted, oldIndex, newIndex);
-    const otherRecords = records.filter((r) => r.petId !== petId);
-    setRecords([...otherRecords, ...reordered]);
+    await reorderRecords(reordered.map((r) => r.id));
   };
 
   return (

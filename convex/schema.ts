@@ -14,7 +14,7 @@ export default defineSchema({
   ...authTables,
 
   pets: defineTable({
-    userId: v.string(),
+    userId: v.id("users"),
     name: v.string(),
     type: v.string(),
     breed: v.optional(v.string()),
@@ -25,7 +25,7 @@ export default defineSchema({
   }).index("by_user", ["userId"]),
 
   records: defineTable({
-    userId: v.string(),
+    userId: v.id("users"),
     petId: v.id("pets"),
     type: v.string(),
     date: v.string(),
@@ -38,7 +38,7 @@ export default defineSchema({
     .index("by_pet_nextDate", ["petId", "nextDate"]),
 
   weights: defineTable({
-    userId: v.string(),
+    userId: v.id("users"),
     petId: v.id("pets"),
     weight: v.string(),
     date: v.string(),

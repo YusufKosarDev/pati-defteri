@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useMutation } from "convex/react";
 import { usePet } from "../context/PetContext";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Layout/Navbar";
@@ -8,10 +9,12 @@ import useEmailReminder from "../hooks/useEmailReminder";
 import usePageTitle from "../hooks/usePageTitle";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import { api } from "../../convex/_generated/api";
 
 function SettingsPage() {
-  const { pets, records, weights, setPets, setRecords, setWeights, language, setLanguage } = usePet();
+  const { pets, records, weights, language, setLanguage } = usePet();
   const { user, updateProfile } = useAuth();
+  const replaceAll = useMutation(api.backup.replaceAll);
   const { t, i18n } = useTranslation();
   const { permission, requestPermission, checkAndNotify, isSupported } = useNotifications(pets, records);
   const { sendReminderEmail, hasReminders } = useEmailReminder(pets, records);
@@ -71,15 +74,41 @@ function SettingsPage() {
   const handleImport = (file) => {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const data = JSON.parse(e.target.result);
         if (!data.pets || !data.records) { toast.error(t("toastBackupError")); return; }
-        setPets(data.pets || []);
-        setRecords(data.records || []);
-        setWeights(data.weights || []);
-        toast.success(`${data.pets.length} ${t("toastBackupImported")}`);
-      } catch { toast.error(t("toastBackupReadError")); }
+
+        const petsArg = (data.pets || []).map((p) => ({
+          legacyId: String(p.id ?? p._id ?? ""),
+          name: p.name,
+          type: p.type,
+          breed: p.breed || undefined,
+          birthDate: p.birthDate || undefined,
+          photo: p.photo || undefined,
+          notes: p.notes || undefined,
+          vets: p.vets ?? (p.vet ? [p.vet] : undefined),
+        }));
+        const recordsArg = (data.records || []).map((r) => ({
+          legacyPetId: String(r.petId),
+          type: r.type,
+          date: r.date,
+          nextDate: r.nextDate || undefined,
+          notes: r.notes || undefined,
+        }));
+        const weightsArg = (data.weights || []).map((w) => ({
+          legacyPetId: String(w.petId),
+          weight: String(w.weight),
+          date: w.date,
+          notes: w.notes || undefined,
+        }));
+
+        const result = await replaceAll({ pets: petsArg, records: recordsArg, weights: weightsArg });
+        toast.success(`${result.pets} ${t("toastBackupImported")}`);
+      } catch (err) {
+        console.error(err);
+        toast.error(t("toastBackupReadError"));
+      }
     };
     reader.readAsText(file);
   };
