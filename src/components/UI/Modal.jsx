@@ -17,13 +17,13 @@ function Modal({ isOpen, onClose, title, children }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: "spring", duration: 0.3 }}
-            className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 z-10"
+            className="relative bg-gray-900 border border-gray-800 rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 z-10"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">{title}</h2>
+              <h2 className="text-xl font-bold text-gray-100">{title}</h2>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold cursor-pointer"
+                className="text-gray-400 hover:text-gray-200 text-2xl font-bold cursor-pointer"
               >
                 ×
               </button>

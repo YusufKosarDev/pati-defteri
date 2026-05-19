@@ -16,11 +16,11 @@ function WeightChart({ weights }) {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-gray-100 rounded-xl shadow-md p-3 text-sm">
-          <p className="font-semibold text-gray-700">{label}</p>
-          <p className="text-emerald-600 font-bold">{payload[0].value} kg</p>
+        <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-md p-3 text-sm">
+          <p className="font-semibold text-gray-200">{label}</p>
+          <p className="text-emerald-400 font-bold">{payload[0].value} kg</p>
           {payload[0]?.payload?.notes && (
-            <p className="text-gray-400 text-xs mt-1">{payload[0].payload.notes}</p>
+            <p className="text-gray-500 text-xs mt-1">{payload[0].payload.notes}</p>
           )}
         </div>
       );
@@ -31,7 +31,7 @@ function WeightChart({ weights }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
         <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#9ca3af" }} />
         <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} />
         <Tooltip content={<CustomTooltip />} />

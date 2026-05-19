@@ -5,10 +5,11 @@ const STORAGE_WARNING_THRESHOLD = 4 * 1024 * 1024; // 4MB
 function getStorageSize(storage) {
   try {
     let total = 0;
-    for (let key in storage) {
-      if (storage.hasOwnProperty(key)) {
-        total += (storage[key].length + key.length) * 2;
-      }
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (key == null) continue;
+      const value = storage.getItem(key) ?? "";
+      total += (value.length + key.length) * 2;
     }
     return total;
   } catch {

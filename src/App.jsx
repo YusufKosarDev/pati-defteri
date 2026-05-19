@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense, useCallback } from "react";
 import { BrowserRouter, Routes, Route, useNavigate, useParams, useLocation, Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { PetProvider, usePet } from "./context/PetContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { AnimatePresence } from "framer-motion";
@@ -20,11 +21,13 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 function PageLoader() {
+  const { i18n } = useTranslation();
+  const isEN = i18n.language === "en";
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="w-10 h-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-gray-500 text-sm">Yükleniyor...</p>
+        <p className="text-gray-500 text-sm">{isEN ? "Loading..." : "Yükleniyor..."}</p>
       </div>
     </div>
   );
@@ -42,6 +45,8 @@ function PetDetailWrapper({ tabMemory, setTabMemory }) {
   const { id } = useParams();
   const { pets } = usePet();
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
+  const isEN = i18n.language === "en";
   const pet = pets.find((p) => p.id === id);
 
   if (!pet) {
@@ -49,9 +54,11 @@ function PetDetailWrapper({ tabMemory, setTabMemory }) {
       <PageTransition>
         <div className="max-w-5xl mx-auto px-6 py-16 text-center text-gray-500">
           <div className="text-6xl mb-4">🐾</div>
-          <p className="text-lg font-medium text-gray-300">Hayvan bulunamadı.</p>
+          <p className="text-lg font-medium text-gray-300">
+            {isEN ? "Pet not found." : "Hayvan bulunamadı."}
+          </p>
           <button onClick={() => navigate("/app")} className="mt-4 text-emerald-400 underline cursor-pointer">
-            Ana sayfaya dön
+            {isEN ? "Back to home" : "Ana sayfaya dön"}
           </button>
         </div>
       </PageTransition>

@@ -65,7 +65,7 @@ function HomePage({ onSelectPet }) {
       }
     }, 600);
     return () => clearTimeout(timer);
-  }, [onboardingSeen]);
+  }, [onboardingSeen, demoShown, pets.length]);
 
   const handleDemoClose = () => {
     setShowDemo(false);

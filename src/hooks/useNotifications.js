@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import i18n from "../i18n/index.js";
 import { isOverdue, isUpcoming, getDaysUntil } from "../utils/dateHelpers";
 
 function useNotifications(pets, records) {
@@ -41,6 +42,7 @@ function useNotifications(pets, records) {
   const checkAndNotify = () => {
     if (!isSupported || Notification.permission !== "granted") return;
 
+    const isEN = i18n.language === "en";
     const overdueRecords = records.filter((r) => r.nextDate && isOverdue(r.nextDate));
     const upcomingRecords = records.filter((r) => r.nextDate && isUpcoming(r.nextDate, 7));
 
@@ -48,20 +50,26 @@ function useNotifications(pets, records) {
       const pet = pets.find((p) => p.id === r.petId);
       if (!pet) return;
       const days = Math.abs(getDaysUntil(r.nextDate));
-      sendNotification(
-        `${pet.name} - Gecikmiş Bakim!`,
-        `${r.type} için ${days} gün geçti. Lütfen veterinerinizi arayın.`
-      );
+      const title = isEN
+        ? `${pet.name} - Overdue Care!`
+        : `${pet.name} - Gecikmiş Bakım!`;
+      const body = isEN
+        ? `${r.type} is ${days} day${days !== 1 ? "s" : ""} overdue. Please contact your vet.`
+        : `${r.type} için ${days} gün geçti. Lütfen veterinerinizi arayın.`;
+      sendNotification(title, body);
     });
 
     upcomingRecords.forEach((r) => {
       const pet = pets.find((p) => p.id === r.petId);
       if (!pet) return;
       const days = getDaysUntil(r.nextDate);
-      sendNotification(
-        `${pet.name} - Yaklasan Bakim`,
-        `${r.type} için ${days === 0 ? "bugün!" : `${days} gün kaldı.`}`
-      );
+      const title = isEN
+        ? `${pet.name} - Upcoming Care`
+        : `${pet.name} - Yaklaşan Bakım`;
+      const body = isEN
+        ? `${r.type} ${days === 0 ? "today!" : `in ${days} day${days !== 1 ? "s" : ""}.`}`
+        : `${r.type} için ${days === 0 ? "bugün!" : `${days} gün kaldı.`}`;
+      sendNotification(title, body);
     });
   };
 

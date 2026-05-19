@@ -68,7 +68,7 @@ function AuthPage() {
     setLoading(true);
 
     if (mode === "register") {
-      const result = register(form.name, form.email, form.password);
+      const result = await register(form.name, form.email, form.password);
       if (result.success) {
         toast.success(isEN ? `Welcome, ${form.name}! 🐾` : `Hoş geldin, ${form.name}! 🐾`);
         navigate("/app");
@@ -76,7 +76,7 @@ function AuthPage() {
         setErrors({ email: result.error });
       }
     } else {
-      const result = login(form.email, form.password);
+      const result = await login(form.email, form.password);
       if (result.success) {
         toast.success(isEN ? "Login successful! 🐾" : "Giriş başarılı! 🐾");
         navigate("/app");

@@ -61,7 +61,7 @@
 - Yaklaşan ve gecikmiş bakımlar için otomatik hatırlatıcı
 
 ### 🎨 Kullanıcı Deneyimi
-- Karanlık / Açık tema
+- Modern karanlık tema
 - Türkçe / İngilizce dil desteği
 - Framer Motion animasyonları
 - Skeleton loading ekranları

@@ -16,18 +16,19 @@ function QRModal({ isOpen, onClose, pet }) {
   const records = getRecordsByPet(pet.id);
   const age = calculateAge(pet.birthDate);
 
-  // QR kod için veri
+  const vets = pet.vets || (pet.vet && (pet.vet.clinicName || pet.vet.doctorName || pet.vet.phone) ? [pet.vet] : []);
+
   const qrData = JSON.stringify({
     name: pet.name,
     type: pet.type,
     breed: pet.breed || "",
     birthDate: pet.birthDate || "",
     age: age || "",
-    vet: pet.vet ? {
-      clinic: pet.vet.clinicName || "",
-      doctor: pet.vet.doctorName || "",
-      phone: pet.vet.phone || "",
-    } : null,
+    vets: vets.map((v) => ({
+      clinic: v.clinicName || "",
+      doctor: v.doctorName || "",
+      phone: v.phone || "",
+    })),
     records: records.slice(0, 5).map((r) => ({
       type: r.type,
       date: r.date,
@@ -126,7 +127,13 @@ function QRModal({ isOpen, onClose, pet }) {
               </p>
               <div className="flex flex-col gap-1">
                 <p className="text-xs text-gray-300">🐾 {isEN ? "Pet info" : "Hayvan bilgisi"}</p>
-                {pet.vet?.clinicName && <p className="text-xs text-gray-300">🏥 {pet.vet.clinicName}</p>}
+                {vets.length > 0 && (
+                  <p className="text-xs text-gray-300">
+                    🏥 {vets.length === 1 && vets[0].clinicName
+                      ? vets[0].clinicName
+                      : isEN ? `${vets.length} vet${vets.length > 1 ? "s" : ""}` : `${vets.length} veteriner`}
+                  </p>
+                )}
                 {records.length > 0 && (
                   <p className="text-xs text-gray-300">
                     💉 {isEN ? `Last ${Math.min(records.length, 5)} records` : `Son ${Math.min(records.length, 5)} kayıt`}

@@ -1,12 +1,12 @@
 function SkeletonBox({ className = "" }) {
   return (
-    <div className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded-2xl ${className}`} />
+    <div className={`animate-pulse bg-gray-800 rounded-2xl ${className}`} />
   );
 }
 
 function PetCardSkeleton() {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 flex flex-col gap-3">
+    <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4 flex flex-col gap-3">
       <div className="flex items-center gap-3">
         <SkeletonBox className="w-16 h-16 rounded-full" />
         <div className="flex-1 flex flex-col gap-2">
@@ -27,7 +27,7 @@ function PetCardSkeleton() {
 
 function RecordCardSkeleton() {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 flex flex-col gap-2">
+    <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <SkeletonBox className="h-5 w-32" />
         <SkeletonBox className="h-6 w-24 rounded-full" />

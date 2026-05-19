@@ -102,7 +102,7 @@ function SettingsPage() {
     toast.success(isEN ? "Name updated!" : "İsim güncellendi!");
   };
 
-  const handleChangePassword = (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
     const errors = {};
     if (!passwordForm.current) errors.current = isEN ? "Required." : "Zorunlu.";
@@ -110,7 +110,7 @@ function SettingsPage() {
     else if (passwordForm.next.length < 6) errors.next = isEN ? "Min 6 characters." : "En az 6 karakter.";
     if (passwordForm.next !== passwordForm.confirm) errors.confirm = isEN ? "Passwords don't match." : "Şifreler eşleşmiyor.";
     if (Object.keys(errors).length > 0) { setPasswordErrors(errors); return; }
-    const result = changePassword(passwordForm.current, passwordForm.next);
+    const result = await changePassword(passwordForm.current, passwordForm.next);
     if (result.success) {
       toast.success(isEN ? "Password changed!" : "Şifre değiştirildi!");
       setShowPasswordForm(false);
@@ -121,10 +121,10 @@ function SettingsPage() {
     }
   };
 
-  const handleDeleteAccount = (e) => {
+  const handleDeleteAccount = async (e) => {
     e.preventDefault();
     setDeleteError("");
-    const result = deleteAccount(deletePassword);
+    const result = await deleteAccount(deletePassword);
     if (result.success) {
       toast.success(isEN ? "Account deleted." : "Hesap silindi.");
       navigate("/");
@@ -133,7 +133,7 @@ function SettingsPage() {
     }
   };
 
-  const handleUpgrade = (e) => {
+  const handleUpgrade = async (e) => {
     e.preventDefault();
     const errors = {};
     if (!upgradeForm.name.trim()) errors.name = isEN ? "Required." : "Zorunlu.";
@@ -142,7 +142,7 @@ function SettingsPage() {
     if (!upgradeForm.password) errors.password = isEN ? "Required." : "Zorunlu.";
     else if (upgradeForm.password.length < 6) errors.password = isEN ? "Min 6 characters." : "En az 6 karakter.";
     if (Object.keys(errors).length > 0) { setUpgradeErrors(errors); return; }
-    const result = upgradeGuest(upgradeForm.name, upgradeForm.email, upgradeForm.password);
+    const result = await upgradeGuest(upgradeForm.name, upgradeForm.email, upgradeForm.password);
     if (result.success) {
       toast.success(isEN ? "Account created! Your data is saved. 🎉" : "Hesap oluşturuldu! Veriler kaydedildi. 🎉");
       setShowUpgradeForm(false);
