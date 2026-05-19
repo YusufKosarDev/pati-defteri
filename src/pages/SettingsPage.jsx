@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { usePet } from "../context/PetContext";
 import { useAuth } from "../context/AuthContext";
@@ -8,13 +7,12 @@ import useNotifications from "../hooks/useNotifications";
 import useEmailReminder from "../hooks/useEmailReminder";
 import usePageTitle from "../hooks/usePageTitle";
 import toast from "react-hot-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 function SettingsPage() {
   const { pets, records, weights, setPets, setRecords, setWeights, language, setLanguage } = usePet();
-  const { user, updateProfile, changePassword, deleteAccount, upgradeGuest } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
   const { permission, requestPermission, checkAndNotify, isSupported } = useNotifications(pets, records);
   const { sendReminderEmail, hasReminders } = useEmailReminder(pets, records);
   const isEN = i18n.language === "en";
@@ -24,15 +22,6 @@ function SettingsPage() {
   const [dragOver, setDragOver] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(user?.name || "");
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({ current: "", next: "", confirm: "" });
-  const [passwordErrors, setPasswordErrors] = useState({});
-  const [showDeleteForm, setShowDeleteForm] = useState(false);
-  const [deletePassword, setDeletePassword] = useState("");
-  const [deleteError, setDeleteError] = useState("");
-  const [showUpgradeForm, setShowUpgradeForm] = useState(false);
-  const [upgradeForm, setUpgradeForm] = useState({ name: "", email: "", password: "" });
-  const [upgradeErrors, setUpgradeErrors] = useState({});
   const [emailInput, setEmailInput] = useState(user?.email || "");
 
   const handleNotificationToggle = async () => {
@@ -95,60 +84,11 @@ function SettingsPage() {
     reader.readAsText(file);
   };
 
-  const handleSaveName = () => {
+  const handleSaveName = async () => {
     if (!newName.trim()) return;
-    updateProfile(newName.trim());
+    await updateProfile(newName.trim());
     setEditingName(false);
     toast.success(isEN ? "Name updated!" : "İsim güncellendi!");
-  };
-
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    const errors = {};
-    if (!passwordForm.current) errors.current = isEN ? "Required." : "Zorunlu.";
-    if (!passwordForm.next) errors.next = isEN ? "Required." : "Zorunlu.";
-    else if (passwordForm.next.length < 6) errors.next = isEN ? "Min 6 characters." : "En az 6 karakter.";
-    if (passwordForm.next !== passwordForm.confirm) errors.confirm = isEN ? "Passwords don't match." : "Şifreler eşleşmiyor.";
-    if (Object.keys(errors).length > 0) { setPasswordErrors(errors); return; }
-    const result = await changePassword(passwordForm.current, passwordForm.next);
-    if (result.success) {
-      toast.success(isEN ? "Password changed!" : "Şifre değiştirildi!");
-      setShowPasswordForm(false);
-      setPasswordForm({ current: "", next: "", confirm: "" });
-      setPasswordErrors({});
-    } else {
-      setPasswordErrors({ current: result.error });
-    }
-  };
-
-  const handleDeleteAccount = async (e) => {
-    e.preventDefault();
-    setDeleteError("");
-    const result = await deleteAccount(deletePassword);
-    if (result.success) {
-      toast.success(isEN ? "Account deleted." : "Hesap silindi.");
-      navigate("/");
-    } else {
-      setDeleteError(result.error);
-    }
-  };
-
-  const handleUpgrade = async (e) => {
-    e.preventDefault();
-    const errors = {};
-    if (!upgradeForm.name.trim()) errors.name = isEN ? "Required." : "Zorunlu.";
-    if (!upgradeForm.email.trim()) errors.email = isEN ? "Required." : "Zorunlu.";
-    else if (!/\S+@\S+\.\S+/.test(upgradeForm.email)) errors.email = isEN ? "Invalid email." : "Geçersiz e-posta.";
-    if (!upgradeForm.password) errors.password = isEN ? "Required." : "Zorunlu.";
-    else if (upgradeForm.password.length < 6) errors.password = isEN ? "Min 6 characters." : "En az 6 karakter.";
-    if (Object.keys(errors).length > 0) { setUpgradeErrors(errors); return; }
-    const result = await upgradeGuest(upgradeForm.name, upgradeForm.email, upgradeForm.password);
-    if (result.success) {
-      toast.success(isEN ? "Account created! Your data is saved. 🎉" : "Hesap oluşturuldu! Veriler kaydedildi. 🎉");
-      setShowUpgradeForm(false);
-    } else {
-      setUpgradeErrors({ email: result.error });
-    }
   };
 
   const Section = ({ title, children, delay = 0 }) => (
@@ -239,51 +179,13 @@ function SettingsPage() {
             </div>
 
             {user.isGuest && (
-              <>
-                <div className="mt-3 p-3 bg-yellow-950/30 border border-yellow-900 rounded-xl">
-                  <p className="text-xs text-yellow-400">
-                    ⚠️ {isEN ? "You're using as a guest. Data will be deleted when browser closes." : "Misafir olarak kullanıyorsunuz. Tarayıcı kapanınca veriler silinir."}
-                  </p>
-                </div>
-                <div className="mt-3">
-                  <button
-                    onClick={() => setShowUpgradeForm(!showUpgradeForm)}
-                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-colors"
-                  >
-                    {showUpgradeForm ? (isEN ? "Cancel" : "İptal") : (isEN ? "🚀 Create Account & Save Data" : "🚀 Hesap Oluştur & Verileri Kaydet")}
-                  </button>
-                  <AnimatePresence>
-                    {showUpgradeForm && (
-                      <motion.form
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        onSubmit={handleUpgrade}
-                        className="flex flex-col gap-3 mt-3 overflow-hidden"
-                      >
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">{isEN ? "Name" : "İsim"}</label>
-                          <input value={upgradeForm.name} onChange={(e) => setUpgradeForm({ ...upgradeForm, name: e.target.value })} className={inputClass(upgradeErrors.name)} placeholder={isEN ? "Your name" : "Adın"} />
-                          {upgradeErrors.name && <p className="text-red-400 text-xs mt-1">{upgradeErrors.name}</p>}
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">{isEN ? "Email" : "E-posta"}</label>
-                          <input type="email" value={upgradeForm.email} onChange={(e) => setUpgradeForm({ ...upgradeForm, email: e.target.value })} className={inputClass(upgradeErrors.email)} placeholder="ornek@email.com" />
-                          {upgradeErrors.email && <p className="text-red-400 text-xs mt-1">{upgradeErrors.email}</p>}
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">{isEN ? "Password" : "Şifre"}</label>
-                          <input type="password" value={upgradeForm.password} onChange={(e) => setUpgradeForm({ ...upgradeForm, password: e.target.value })} className={inputClass(upgradeErrors.password)} placeholder={isEN ? "Min 6 characters" : "En az 6 karakter"} />
-                          {upgradeErrors.password && <p className="text-red-400 text-xs mt-1">{upgradeErrors.password}</p>}
-                        </div>
-                        <button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-colors">
-                          {isEN ? "Create Account" : "Hesap Oluştur"}
-                        </button>
-                      </motion.form>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </>
+              <div className="mt-3 p-3 bg-yellow-950/30 border border-yellow-900 rounded-xl">
+                <p className="text-xs text-yellow-400">
+                  ⚠️ {isEN
+                    ? "You're using as a guest. Account upgrade will be available soon."
+                    : "Misafir olarak kullanıyorsunuz. Hesaba yükseltme yakında eklenecek."}
+                </p>
+              </div>
             )}
           </Section>
         )}
@@ -395,41 +297,6 @@ function SettingsPage() {
           </div>
         </Section>
 
-        {/* Güvenlik */}
-        {user && !user.isGuest && (
-          <Section title={isEN ? "Security" : "Güvenlik"} delay={0.35}>
-            <Row icon="🔑" label={isEN ? "Change Password" : "Şifre Değiştir"} desc={isEN ? "Update your account password" : "Hesap şifreni güncelle"}>
-              <button onClick={() => setShowPasswordForm(!showPasswordForm)} className="text-xs bg-gray-800 text-gray-400 px-3 py-1.5 rounded-xl font-medium cursor-pointer hover:bg-gray-700 transition-colors">
-                {showPasswordForm ? (isEN ? "Cancel" : "İptal") : (isEN ? "Change" : "Değiştir")}
-              </button>
-            </Row>
-            <AnimatePresence>
-              {showPasswordForm && (
-                <motion.form initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} onSubmit={handleChangePassword} className="flex flex-col gap-3 pt-3 overflow-hidden">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">{isEN ? "Current Password" : "Mevcut Şifre"}</label>
-                    <input type="password" value={passwordForm.current} onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })} className={inputClass(passwordErrors.current)} />
-                    {passwordErrors.current && <p className="text-red-400 text-xs mt-1">{passwordErrors.current}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">{isEN ? "New Password" : "Yeni Şifre"}</label>
-                    <input type="password" value={passwordForm.next} onChange={(e) => setPasswordForm({ ...passwordForm, next: e.target.value })} className={inputClass(passwordErrors.next)} />
-                    {passwordErrors.next && <p className="text-red-400 text-xs mt-1">{passwordErrors.next}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">{isEN ? "Confirm New Password" : "Yeni Şifre Tekrar"}</label>
-                    <input type="password" value={passwordForm.confirm} onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })} className={inputClass(passwordErrors.confirm)} />
-                    {passwordErrors.confirm && <p className="text-red-400 text-xs mt-1">{passwordErrors.confirm}</p>}
-                  </div>
-                  <button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors">
-                    {isEN ? "Save New Password" : "Yeni Şifreyi Kaydet"}
-                  </button>
-                </motion.form>
-              )}
-            </AnimatePresence>
-          </Section>
-        )}
-
         {/* Hakkında */}
         <Section title={t("about")} delay={0.4}>
           <Row icon="🐾" label={t("appName")} desc={t("appDesc")}>
@@ -443,40 +310,6 @@ function SettingsPage() {
           </Row>
         </Section>
 
-        {/* Hesabı Sil */}
-        {user && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="bg-red-950/20 rounded-2xl border border-red-900 p-6 mb-4">
-            <h3 className="text-xs font-bold text-red-400 uppercase tracking-wider mb-4">
-              {isEN ? "Danger Zone" : "Tehlikeli Bölge"}
-            </h3>
-            <Row icon="🗑️" label={isEN ? "Delete Account" : "Hesabı Sil"} desc={isEN ? "Permanently delete your account and all data" : "Hesabını ve tüm verilerini kalıcı olarak sil"}>
-              <button onClick={() => setShowDeleteForm(!showDeleteForm)} className="text-xs bg-red-950 text-red-400 border border-red-900 px-3 py-1.5 rounded-xl font-medium cursor-pointer hover:bg-red-900 transition-colors">
-                {showDeleteForm ? (isEN ? "Cancel" : "İptal") : (isEN ? "Delete" : "Sil")}
-              </button>
-            </Row>
-            <AnimatePresence>
-              {showDeleteForm && (
-                <motion.form initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} onSubmit={handleDeleteAccount} className="flex flex-col gap-3 pt-3 overflow-hidden">
-                  <div className="p-3 bg-red-950/50 rounded-xl">
-                    <p className="text-xs text-red-400 font-medium">
-                      ⚠️ {isEN ? "This action is irreversible! All your data will be permanently deleted." : "Bu işlem geri alınamaz! Tüm veriler kalıcı olarak silinecek."}
-                    </p>
-                  </div>
-                  {!user.isGuest && (
-                    <div>
-                      <label className="block text-xs font-medium text-red-500 mb-1">{isEN ? "Enter your password to confirm" : "Onaylamak için şifreni gir"}</label>
-                      <input type="password" value={deletePassword} onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(""); }} className="w-full bg-gray-900 border border-red-800 rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-400" placeholder={isEN ? "Your password" : "Şifren"} />
-                      {deleteError && <p className="text-red-400 text-xs mt-1">{deleteError}</p>}
-                    </div>
-                  )}
-                  <button type="submit" className="bg-red-500 hover:bg-red-600 text-white py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors">
-                    {isEN ? "Yes, Delete My Account" : "Evet, Hesabımı Sil"}
-                  </button>
-                </motion.form>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        )}
       </div>
     </div>
   );

@@ -102,18 +102,18 @@ function Navbar({ searchOpen, setSearchOpen }) {
     setMenuOpen(false);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (user?.isGuest) {
       setLogoutConfirm(true);
       return;
     }
-    logout();
+    await logout();
     toast.success(isEN ? "Logged out." : "Çıkış yapıldı.");
     navigate("/");
   };
 
-  const confirmLogout = () => {
-    logout();
+  const confirmLogout = async () => {
+    await logout();
     toast.success(isEN ? "Logged out." : "Çıkış yapıldı.");
     navigate("/");
   };

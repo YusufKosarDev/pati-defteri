@@ -87,10 +87,14 @@ function AuthPage() {
     setLoading(false);
   };
 
-  const handleGuest = () => {
-    loginAsGuest();
-    toast(isEN ? "Continuing as guest." : "Misafir olarak devam ediyorsunuz.", { icon: "👤" });
-    navigate("/app");
+  const handleGuest = async () => {
+    const result = await loginAsGuest();
+    if (result.success) {
+      toast(isEN ? "Continuing as guest." : "Misafir olarak devam ediyorsunuz.", { icon: "👤" });
+      navigate("/app");
+    } else {
+      toast.error(result.error);
+    }
   };
 
   const inputClass = (field) => `w-full bg-gray-800 border ${
