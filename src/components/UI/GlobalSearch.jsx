@@ -23,18 +23,23 @@ function GlobalSearch({ isOpen, onClose }) {
 
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-      setQuery("");
+      const t = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(t);
     }
   }, [isOpen]);
 
+  const handleClose = () => {
+    setQuery("");
+    onClose();
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") handleClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  });
 
   const q = query.toLowerCase().trim();
 
@@ -62,12 +67,12 @@ function GlobalSearch({ isOpen, onClose }) {
 
   const handleSelectPet = (pet) => {
     navigate(`/pets/${pet.id}`);
-    onClose();
+    handleClose();
   };
 
   const handleSelectRecord = (record) => {
     navigate(`/pets/${record.petId}`);
-    onClose();
+    handleClose();
   };
 
   const hasResults = filteredPets.length > 0 || filteredRecords.length > 0;
@@ -82,7 +87,7 @@ function GlobalSearch({ isOpen, onClose }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={onClose}
+            onClick={handleClose}
           />
 
           <motion.div

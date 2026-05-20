@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../../context/AuthContext";
 import useLocalStorage from "../../hooks/useLocalStorage";
 
 function Onboarding({ onFinish }) {
@@ -132,7 +131,6 @@ function Onboarding({ onFinish }) {
 
 function OnboardingWrapper({ children }) {
   const [seen, setSeen] = useLocalStorage("onboarding_seen", false);
-  const { user } = useAuth();
 
   if (!seen) {
     return (

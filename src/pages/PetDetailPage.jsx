@@ -21,19 +21,14 @@ function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [qrOpen, setQrOpen] = useState(false);
-  const { t, i18n } = useTranslation();
-  const isEN = i18n.language === "en";
+  const { t } = useTranslation();
 
   usePageTitle(pet?.name);
 
   useEffect(() => {
-    setActiveTab(initialTab);
-  }, [pet.id, initialTab]);
-
-  useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 500);
     return () => clearTimeout(timer);
-  }, [pet.id]);
+  }, []);
 
   const age = calculateAge(pet.birthDate);
   const gradient = getAvatarGradient(pet.name);

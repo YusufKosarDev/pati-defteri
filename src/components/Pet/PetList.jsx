@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { usePet } from "../../context/PetContext";
-import { calculateAge, isOverdue, isUpcoming } from "../../utils/dateHelpers";
+import { isOverdue, isUpcoming } from "../../utils/dateHelpers";
 import PetCard from "./PetCard";
 import Modal from "../UI/Modal";
 import PetForm from "./PetForm";
@@ -29,7 +29,7 @@ const SORT_OPTIONS = {
 };
 
 function PetList({ onSelectPet }) {
-  const { pets, records, getRecordsByPet } = usePet();
+  const { pets, getRecordsByPet } = usePet();
   const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
   const [addOpen, setAddOpen] = useState(false);

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "./AuthContext";
 import useLocalStorage from "../hooks/useLocalStorage";
@@ -74,9 +74,6 @@ export function PetProvider({ children }) {
     await reorderRecordsMut({ orderedIds });
   };
 
-  const getRecordsByPet = (petId) =>
-    (records ?? []).filter((r) => r.petId === petId);
-
   const addWeight = async (weight) => {
     await createWeight(weight);
     toast.success(
@@ -89,24 +86,57 @@ export function PetProvider({ children }) {
     toast.success(isEN() ? "Weight record deleted." : "Ağırlık kaydı silindi.");
   };
 
-  const getWeightsByPet = (petId) =>
-    (weights ?? []).filter((w) => w.petId === petId);
-
   // Geriye dönük uyumluluk: tüketiciler `id` ve `photo` field'larını okuyor.
   // Convex `_id` veriyor; photoUrl varsa onu pet.photo'nun yerine geçir.
-  const adapt = (rows) =>
-    (rows ?? []).map((r) => ({
-      ...r,
-      id: r._id,
-      photo: r.photoUrl ?? r.photo ?? "",
-    }));
+  // useMemo ile sorgu sonucu değişmedikçe aynı referans korunuyor.
+  const adaptedPets = useMemo(
+    () => (pets ?? []).map((r) => ({ ...r, id: r._id, photo: r.photoUrl ?? r.photo ?? "" })),
+    [pets]
+  );
+  const adaptedRecords = useMemo(
+    () => (records ?? []).map((r) => ({ ...r, id: r._id })),
+    [records]
+  );
+  const adaptedWeights = useMemo(
+    () => (weights ?? []).map((r) => ({ ...r, id: r._id })),
+    [weights]
+  );
+
+  const recordsByPet = useMemo(() => {
+    const map = new Map();
+    for (const r of adaptedRecords) {
+      const arr = map.get(r.petId);
+      if (arr) arr.push(r);
+      else map.set(r.petId, [r]);
+    }
+    return map;
+  }, [adaptedRecords]);
+
+  const weightsByPet = useMemo(() => {
+    const map = new Map();
+    for (const w of adaptedWeights) {
+      const arr = map.get(w.petId);
+      if (arr) arr.push(w);
+      else map.set(w.petId, [w]);
+    }
+    return map;
+  }, [adaptedWeights]);
+
+  const getRecordsByPet = useCallback(
+    (petId) => recordsByPet.get(petId) ?? [],
+    [recordsByPet]
+  );
+  const getWeightsByPet = useCallback(
+    (petId) => weightsByPet.get(petId) ?? [],
+    [weightsByPet]
+  );
 
   return (
     <PetContext.Provider
       value={{
-        pets: adapt(pets),
-        records: adapt(records),
-        weights: adapt(weights),
+        pets: adaptedPets,
+        records: adaptedRecords,
+        weights: adaptedWeights,
         loading: pets === undefined || records === undefined || weights === undefined,
         addPet,
         updatePet,
@@ -115,10 +145,10 @@ export function PetProvider({ children }) {
         updateRecord,
         deleteRecord,
         reorderRecords,
-        getRecordsByPet: (petId) => adapt(getRecordsByPet(petId)),
+        getRecordsByPet,
         addWeight,
         deleteWeight,
-        getWeightsByPet: (petId) => adapt(getWeightsByPet(petId)),
+        getWeightsByPet,
         language,
         setLanguage,
       }}

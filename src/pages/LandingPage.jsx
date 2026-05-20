@@ -1,20 +1,20 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { usePet } from "../context/PetContext";
 import usePageTitle from "../hooks/usePageTitle";
 
-function useScrollAnimation(threshold = 0.2) {
+function useScrollAnimation(amount = 0.2) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, threshold });
+  const isInView = useInView(ref, { once: true, amount });
   return [ref, isInView];
 }
 
 function AnimatedCounter({ target, duration = 2000, suffix = "" }) {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, threshold: 0.5 });
+  const isInView = useInView(ref, { once: true, amount: 0.5 });
 
   useEffect(() => {
     if (!isInView) return;
@@ -66,14 +66,14 @@ function LandingPage() {
     document.head.appendChild(link);
   }, []);
 
-  const features = [
+  const features = useMemo(() => [
     { icon: "💉", title: t("feature1Title"), desc: t("feature1Desc"), color: "from-emerald-400 to-teal-500" },
     { icon: "🪱", title: t("feature2Title"), desc: t("feature2Desc"), color: "from-blue-400 to-indigo-500" },
     { icon: "⚖️", title: t("feature3Title"), desc: t("feature3Desc"), color: "from-violet-400 to-purple-500" },
     { icon: "📄", title: t("feature4Title"), desc: t("feature4Desc"), color: "from-orange-400 to-rose-500" },
     { icon: "🔔", title: t("feature5Title"), desc: t("feature5Desc"), color: "from-pink-400 to-rose-500" },
     { icon: "📱", title: language === "tr" ? "QR Kod Paylaşımı" : "QR Code Sharing", desc: language === "tr" ? "Hayvan sağlık kartını QR kod ile veterinerinizle paylaşın." : "Share your pet's health card via QR code with your vet.", color: "from-cyan-400 to-sky-500" },
-  ];
+  ], [t, language]);
 
   const stats = [
     { value: 500, suffix: "+", label: language === "tr" ? "Mutlu Kullanıcı" : "Happy Users" },

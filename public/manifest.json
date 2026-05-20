@@ -32,7 +32,7 @@
   "screenshots": [
     {
       "src": "/screenshot-home.png",
-      "sizes": "1280x720",
+      "sizes": "2880x1800",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Ana Sayfa"

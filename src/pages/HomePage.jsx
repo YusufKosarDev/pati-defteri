@@ -49,7 +49,7 @@ function HomePage({ onSelectPet }) {
   const [showDemo, setShowDemo] = useState(false);
   const { pets, records, weights } = usePet();
   const { user } = useAuth();
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const isEN = i18n.language === "en";
 
   usePageTitle(isEN ? "My Pets" : "Hayvanlarım");

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { usePet } from "../context/PetContext";
-import { formatDate } from "../utils/dateHelpers";
 import usePageTitle from "../hooks/usePageTitle";
 
 const RECORD_ICONS = {

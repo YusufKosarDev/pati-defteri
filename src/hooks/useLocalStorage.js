@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const STORAGE_WARNING_THRESHOLD = 4 * 1024 * 1024; // 4MB
 
@@ -17,24 +17,25 @@ function getStorageSize(storage) {
   }
 }
 
-function useLocalStorage(key, initialValue, storage = localStorage) {
-  const [storedValue, setStoredValue] = useState(() => {
-    try {
-      const item = storage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch {
-      return initialValue;
-    }
-  });
+function read(storage, key, initialValue) {
+  try {
+    const item = storage.getItem(key);
+    return item ? JSON.parse(item) : initialValue;
+  } catch {
+    return initialValue;
+  }
+}
 
-  useEffect(() => {
-    try {
-      const item = storage.getItem(key);
-      setStoredValue(item ? JSON.parse(item) : initialValue);
-    } catch {
-      setStoredValue(initialValue);
-    }
-  }, [key]);
+function useLocalStorage(key, initialValue, storage = localStorage) {
+  const [storedKey, setStoredKey] = useState(key);
+  const [storedValue, setStoredValue] = useState(() => read(storage, key, initialValue));
+
+  // key değişirse render sırasında yeniden oku.
+  // React'in "derive state from props" deseni — bkz. react.dev/reference/react/useState#storing-information-from-previous-renders
+  if (storedKey !== key) {
+    setStoredKey(key);
+    setStoredValue(read(storage, key, initialValue));
+  }
 
   const setValue = (value) => {
     try {

@@ -29,7 +29,7 @@ function SummaryBanner() {
       const timer = setTimeout(fireConfetti, 1000);
       return () => clearTimeout(timer);
     }
-  }, [todayBirthdays.length]);
+  }, [todayBirthdays.length, fireConfetti]);
 
   // Early return hook'lardan SONRA
   if (pets.length === 0) return null;

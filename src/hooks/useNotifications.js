@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -35,11 +35,6 @@ function useNotifications() {
   const saveSubscription = useAction(api.push.saveSubscription);
   const removeSubscription = useAction(api.push.removeSubscription);
   const sendTestPush = useAction(api.push.sendTestPush);
-
-  useEffect(() => {
-    if (!isSupported) return;
-    setPermission(Notification.permission);
-  }, [isSupported]);
 
   async function ensureSubscribed() {
     if (!isSupported || !VAPID_PUBLIC_KEY) return null;
@@ -87,7 +82,9 @@ function useNotifications() {
 
   return {
     permission,
-    isSupported: isSupported && !!VAPID_PUBLIC_KEY,
+    isSupported,
+    isConfigured: !!VAPID_PUBLIC_KEY,
+    isReady: isSupported && !!VAPID_PUBLIC_KEY,
     requestPermission,
     unsubscribe,
     sendTest,

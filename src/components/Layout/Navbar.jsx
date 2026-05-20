@@ -77,7 +77,7 @@ const CloseIcon = () => (
   </svg>
 );
 
-function Navbar({ searchOpen, setSearchOpen }) {
+function Navbar({ setSearchOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();

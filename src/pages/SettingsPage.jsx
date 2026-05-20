@@ -44,7 +44,7 @@ function SettingsPage() {
   const { user, updateProfile } = useAuth();
   const replaceAll = useMutation(api.backup.replaceAll);
   const { t, i18n } = useTranslation();
-  const { permission, requestPermission, sendTest, isSupported } = useNotifications();
+  const { permission, requestPermission, sendTest, isSupported, isConfigured, isReady } = useNotifications();
   const { sendReminderEmail, hasReminders } = useEmailReminder(pets, records);
   const isEN = i18n.language === "en";
 
@@ -56,7 +56,14 @@ function SettingsPage() {
   const [emailInput, setEmailInput] = useState(user?.email || "");
 
   const handleNotificationToggle = async () => {
-    if (!isSupported) { toast.error(t("toastNotificationDenied")); return; }
+    if (!isSupported) {
+      toast.error(isEN ? "Your browser doesn't support push notifications." : "Tarayıcınız push bildirimlerini desteklemiyor.");
+      return;
+    }
+    if (!isConfigured) {
+      toast.error(isEN ? "Push notifications are not configured on the server." : "Sunucuda push bildirimleri yapılandırılmamış.");
+      return;
+    }
     if (permission === "denied") {
       toast.error(isEN ? "Reset permission from browser settings." : "Tarayıcı ayarlarından izni sıfırlayın.");
       return;
@@ -253,8 +260,19 @@ function SettingsPage() {
 
         {/* Bildirimler */}
         <Section title={t("notifications")} delay={0.2}>
+          {!isReady && (
+            <div className="mb-3 p-3 bg-yellow-950/30 border border-yellow-900 rounded-xl text-xs text-yellow-400">
+              ⚠️ {!isSupported
+                ? (isEN ? "Your browser doesn't support push notifications." : "Tarayıcınız push bildirimlerini desteklemiyor.")
+                : (isEN ? "Push notifications are not configured on the server (VAPID key missing)." : "Sunucuda push bildirimleri yapılandırılmamış (VAPID anahtarı eksik).")}
+            </div>
+          )}
           <Row icon="🔔" label={t("pushNotifications")} desc={t("pushNotificationsDesc")}>
-            <button onClick={handleNotificationToggle} className={`relative w-12 h-6 rounded-full transition-colors duration-200 cursor-pointer ${permission === "granted" ? "bg-emerald-500" : "bg-gray-700"}`}>
+            <button
+              onClick={handleNotificationToggle}
+              disabled={!isReady}
+              className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${!isReady ? "opacity-40 cursor-not-allowed" : "cursor-pointer"} ${permission === "granted" ? "bg-emerald-500" : "bg-gray-700"}`}
+            >
               <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${permission === "granted" ? "translate-x-7" : "translate-x-1"}`} />
             </button>
           </Row>

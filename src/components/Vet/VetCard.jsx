@@ -7,7 +7,7 @@ import VetForm from "./VetForm";
 import Button from "../UI/Button";
 import ConfirmModal from "../UI/ConfirmModal";
 
-function SingleVetCard({ vet, index, pet, isEN, onEdit, onDelete }) {
+function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopyPhone = () => {
@@ -216,7 +216,6 @@ function VetCard({ pet }) {
             key={index}
             vet={vet}
             index={index}
-            pet={pet}
             isEN={isEN}
             onEdit={(i) => setEditIndex(i)}
             onDelete={(i) => setDeleteIndex(i)}

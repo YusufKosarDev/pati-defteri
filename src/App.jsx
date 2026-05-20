@@ -68,6 +68,7 @@ function PetDetailWrapper({ tabMemory, setTabMemory }) {
   return (
     <PageTransition>
       <PetDetailPage
+        key={pet.id}
         pet={pet}
         onBack={() => navigate("/app")}
         initialTab={tabMemory[id] || "records"}

@@ -5,7 +5,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line, Legend, AreaChart, Area,
 } from "recharts";
 import { usePet } from "../context/PetContext";
-import { isOverdue, isUpcoming, getDaysUntil } from "../utils/dateHelpers";
+import { isOverdue, isUpcoming } from "../utils/dateHelpers";
 import usePageTitle from "../hooks/usePageTitle";
 
 const COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899", "#f97316"];
