@@ -237,9 +237,8 @@ function AuthPage() {
 
           <p className="text-center text-xs text-gray-600 mt-4">
             ⚠️ {isEN
-              ? "As a guest, your data will be deleted when the browser closes."
-              : "Misafir olarak giriş yaparsanız verileriniz"}{" "}
-            {!isEN && <span className="text-yellow-500">tarayıcı kapanınca silinir.</span>}
+              ? "Guest sessions stay on this device. Data is permanently lost when you log out or clear browser storage."
+              : "Misafir oturum bu cihazda saklanır. Çıkış yaparsanız veya tarayıcı verilerini temizlerseniz veriler kalıcı olarak silinir."}
           </p>
         </div>
       </motion.div>

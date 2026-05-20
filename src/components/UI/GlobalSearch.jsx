@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { usePet } from "../../context/PetContext";
 import { useTranslation } from "react-i18next";
 import { formatDate, getAvatarColor } from "../../utils/dateHelpers";
+import { matchesType } from "../../utils/recordTypes";
 
 const RECORD_ICONS = {
   "Karma Aşı": "💉", "Kuduz Aşısı": "🛡️", "Parazit Damlası": "💧",
@@ -47,7 +48,7 @@ function GlobalSearch({ isOpen, onClose }) {
 
   const filteredRecords = q
     ? records.filter((r) =>
-        r.type?.toLowerCase().includes(q) ||
+        matchesType(r.type, q) ||
         r.notes?.toLowerCase().includes(q)
       )
     : [];

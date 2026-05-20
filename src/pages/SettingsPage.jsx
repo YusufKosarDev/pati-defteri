@@ -10,6 +10,35 @@ import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { api } from "../../convex/_generated/api";
 
+function Section({ title, children, delay = 0 }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className="bg-gray-900 rounded-2xl border border-gray-800 p-6 mb-4"
+    >
+      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">{title}</h3>
+      {children}
+    </motion.div>
+  );
+}
+
+function Row({ icon, label, desc, children }) {
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-gray-800 last:border-0">
+      <div className="flex items-center gap-3">
+        <span className="text-xl">{icon}</span>
+        <div>
+          <div className="font-medium text-gray-100 text-sm">{label}</div>
+          {desc && <div className="text-xs text-gray-500">{desc}</div>}
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function SettingsPage() {
   const { pets, records, weights, language, setLanguage } = usePet();
   const { user, updateProfile } = useAuth();
@@ -137,32 +166,6 @@ function SettingsPage() {
     toast.success(isEN ? "Name updated!" : "İsim güncellendi!");
   };
 
-  const Section = ({ title, children, delay = 0 }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className="bg-gray-900 rounded-2xl border border-gray-800 p-6 mb-4"
-    >
-      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">{title}</h3>
-      {children}
-    </motion.div>
-  );
-
-  const Row = ({ icon, label, desc, children }) => (
-    <div className="flex items-center justify-between py-3 border-b border-gray-800 last:border-0">
-      <div className="flex items-center gap-3">
-        <span className="text-xl">{icon}</span>
-        <div>
-          <div className="font-medium text-gray-100 text-sm">{label}</div>
-          {desc && <div className="text-xs text-gray-500">{desc}</div>}
-        </div>
-      </div>
-      {children}
-    </div>
-  );
-
-  const inputClass = (error) => `w-full bg-gray-800 border ${error ? "border-red-400" : "border-gray-700"} rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-400`;
   const notificationLabel = { granted: t("notificationGranted"), denied: t("notificationDenied"), default: t("notificationDefault") }[permission];
   const stats = [
     { icon: "🐾", label: t("backupPets"), count: pets.length },

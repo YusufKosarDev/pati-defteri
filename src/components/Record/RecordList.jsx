@@ -7,6 +7,7 @@ import {
   SortableContext, verticalListSortingStrategy, arrayMove,
 } from "@dnd-kit/sortable";
 import { usePet } from "../../context/PetContext";
+import { getTypeAliases } from "../../utils/recordTypes";
 import RecordCard from "./RecordCard";
 import Modal from "../UI/Modal";
 import RecordForm from "./RecordForm";
@@ -29,7 +30,7 @@ function RecordList({ petId }) {
   const allRecords = getRecordsByPet(petId);
   const filtered = activeFilter === "all"
     ? allRecords
-    : allRecords.filter((r) => r.type === activeFilter);
+    : allRecords.filter((r) => getTypeAliases(activeFilter).includes(r.type));
   const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const handleDragEnd = async (event) => {

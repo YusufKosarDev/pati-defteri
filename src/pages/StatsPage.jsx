@@ -10,28 +10,42 @@ import usePageTitle from "../hooks/usePageTitle";
 
 const COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899", "#f97316"];
 
+function CustomTooltip({ active, payload, label }) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-xs">
+        <p className="text-gray-300 font-medium mb-1">{label}</p>
+        {payload.map((p, i) => (
+          <p key={i} style={{ color: p.color }} className="font-medium">
+            {p.name}: {p.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+}
+
+function ChartCard({ title, children, delay = 0 }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className="bg-gray-900 rounded-2xl border border-gray-800 p-5"
+    >
+      <h3 className="text-sm font-bold text-gray-300 mb-4">{title}</h3>
+      {children}
+    </motion.div>
+  );
+}
+
 function StatsPage() {
   const { pets, records, weights } = usePet();
   const { i18n } = useTranslation();
   const isEN = i18n.language === "en";
 
   usePageTitle(isEN ? "Statistics" : "İstatistikler");
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-xs">
-          <p className="text-gray-300 font-medium mb-1">{label}</p>
-          {payload.map((p, i) => (
-            <p key={i} style={{ color: p.color }} className="font-medium">
-              {p.name}: {p.value}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
 
   // Aylık kayıt verisi (son 12 ay)
   const monthlyData = () => {
@@ -129,18 +143,6 @@ function StatsPage() {
       color: "bg-pink-500/10 text-pink-400",
     },
   ];
-
-  const ChartCard = ({ title, children, delay = 0 }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className="bg-gray-900 rounded-2xl border border-gray-800 p-5"
-    >
-      <h3 className="text-sm font-bold text-gray-300 mb-4">{title}</h3>
-      {children}
-    </motion.div>
-  );
 
   if (pets.length === 0) {
     return (
