@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useMutation } from "convex/react";
 import { useTranslation } from "react-i18next";
-import { usePet } from "../../context/PetContext";
+import { usePet } from "../../hooks/usePet";
 import useConfetti from "../../hooks/useConfetti";
 import Button from "../UI/Button";
 import { api } from "../../../convex/_generated/api";

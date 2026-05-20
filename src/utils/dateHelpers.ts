@@ -1,6 +1,6 @@
-import i18n from "../i18n/index.js";
+import i18n from "../i18n/index";
 
-export function formatDate(dateString) {
+export function formatDate(dateString?: string | null): string {
   if (!dateString) return "";
   const date = new Date(dateString);
   const isEN = i18n.language === "en";
@@ -11,24 +11,25 @@ export function formatDate(dateString) {
   });
 }
 
-export function getDaysUntil(dateString) {
+export function getDaysUntil(dateString?: string | null): number | null {
   if (!dateString) return null;
   const today = new Date();
   const target = new Date(dateString);
-  const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+  const diff = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   return diff;
 }
 
-export function isOverdue(dateString) {
-  return getDaysUntil(dateString) < 0;
+export function isOverdue(dateString?: string | null): boolean {
+  const d = getDaysUntil(dateString);
+  return d !== null && d < 0;
 }
 
-export function isUpcoming(dateString, withinDays = 30) {
+export function isUpcoming(dateString?: string | null, withinDays = 30): boolean {
   const days = getDaysUntil(dateString);
   return days !== null && days >= 0 && days <= withinDays;
 }
 
-export function calculateAge(birthDateString) {
+export function calculateAge(birthDateString?: string | null): string | null {
   if (!birthDateString) return null;
   const birth = new Date(birthDateString);
   const today = new Date();
@@ -53,36 +54,25 @@ export function calculateAge(birthDateString) {
   }
 }
 
-export function getBirthdayStatus(birthDateString) {
+export type BirthdayStatus =
+  | { type: "today"; daysUntil: 0; age: number }
+  | { type: "upcoming"; daysUntil: number; age: number };
+
+export function getBirthdayStatus(birthDateString?: string | null): BirthdayStatus | null {
   if (!birthDateString) return null;
 
   const today = new Date();
   const birth = new Date(birthDateString);
 
-  const thisYearBirthday = new Date(
-    today.getFullYear(),
-    birth.getMonth(),
-    birth.getDate()
-  );
-
-  const diff = Math.ceil(
-    (thisYearBirthday - today) / (1000 * 60 * 60 * 24)
-  );
-
+  const thisYearBirthday = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
+  const diff = Math.ceil((thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   const age = today.getFullYear() - birth.getFullYear();
 
   if (diff === 0) return { type: "today", daysUntil: 0, age };
   if (diff > 0 && diff <= 7) return { type: "upcoming", daysUntil: diff, age };
   if (diff < 0) {
-    // Gelecek yılki doğum günü
-    const nextYearBirthday = new Date(
-      today.getFullYear() + 1,
-      birth.getMonth(),
-      birth.getDate()
-    );
-    const nextDiff = Math.ceil(
-      (nextYearBirthday - today) / (1000 * 60 * 60 * 24)
-    );
+    const nextYearBirthday = new Date(today.getFullYear() + 1, birth.getMonth(), birth.getDate());
+    const nextDiff = Math.ceil((nextYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     if (nextDiff <= 7) return { type: "upcoming", daysUntil: nextDiff, age: age + 1 };
   }
 
@@ -111,13 +101,13 @@ const AVATAR_COLORS = [
   "bg-fuchsia-500",
 ];
 
-export function getAvatarColor(name) {
+export function getAvatarColor(name?: string | null): string {
   if (!name) return AVATAR_COLORS[0];
   const index = name.charCodeAt(0) % AVATAR_COLORS.length;
   return AVATAR_COLORS[index];
 }
 
-export function getAvatarGradient(name) {
+export function getAvatarGradient(name?: string | null): string {
   if (!name) return AVATAR_GRADIENTS[0];
   const index = name.charCodeAt(0) % AVATAR_GRADIENTS.length;
   return AVATAR_GRADIENTS[index];

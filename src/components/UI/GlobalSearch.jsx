@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { usePet } from "../../context/PetContext";
+import { usePet } from "../../hooks/usePet";
 import { useTranslation } from "react-i18next";
 import { formatDate, getAvatarColor } from "../../utils/dateHelpers";
 import { matchesType } from "../../utils/recordTypes";

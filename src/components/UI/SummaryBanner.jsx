@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { usePet } from "../../context/PetContext";
+import { usePet } from "../../hooks/usePet";
 import { useTranslation } from "react-i18next";
 import { isOverdue, isUpcoming, getDaysUntil, getBirthdayStatus } from "../../utils/dateHelpers";
 import useConfetti from "../../hooks/useConfetti";

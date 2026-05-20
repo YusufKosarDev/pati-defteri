@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend, AreaChart, Area,
 } from "recharts";
-import { usePet } from "../context/PetContext";
+import { usePet } from "../hooks/usePet";
 import { isOverdue, isUpcoming } from "../utils/dateHelpers";
 import usePageTitle from "../hooks/usePageTitle";
 

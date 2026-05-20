@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { usePet } from "../context/PetContext";
+import { usePet } from "../hooks/usePet";
 import usePageTitle from "../hooks/usePageTitle";
 
 const RECORD_ICONS = {

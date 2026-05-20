@@ -1,8 +1,10 @@
+// Sentry side-effect import — en başta init olmalı ki sonraki kod hataları yakalansın
+import './lib/sentry'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Toaster } from 'react-hot-toast'
 import { ConvexAuthProvider } from '@convex-dev/auth/react'
-import { convex, isConvexConfigured } from './lib/convex.js'
+import { convex, isConvexConfigured } from './lib/convex'
 import './index.css'
 import './i18n/index.js'
 import App from './App.jsx'

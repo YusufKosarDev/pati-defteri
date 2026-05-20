@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { usePet } from "../../context/PetContext";
+import { usePet } from "../../hooks/usePet";
 import { isOverdue, isUpcoming } from "../../utils/dateHelpers";
 import PetCard from "./PetCard";
 import Modal from "../UI/Modal";

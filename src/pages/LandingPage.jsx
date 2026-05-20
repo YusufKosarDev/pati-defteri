@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { usePet } from "../context/PetContext";
+import { usePet } from "../hooks/usePet";
 import usePageTitle from "../hooks/usePageTitle";
 
 function useScrollAnimation(amount = 0.2) {

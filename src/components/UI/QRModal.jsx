@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { QRCodeSVG } from "qrcode.react";
 import { calculateAge } from "../../utils/dateHelpers";
-import { usePet } from "../../context/PetContext";
+import { usePet } from "../../hooks/usePet";
 
 function QRModal({ isOpen, onClose, pet }) {
   const { getRecordsByPet } = usePet();

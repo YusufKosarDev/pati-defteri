@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePet } from "../../context/PetContext";
+import { usePet } from "../../hooks/usePet";
 import { useTranslation } from "react-i18next";
 import Button from "../UI/Button";
 

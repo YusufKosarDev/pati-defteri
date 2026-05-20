@@ -1,8 +1,10 @@
 import { useState, lazy, Suspense, useMemo } from "react";
 import { BrowserRouter, Routes, Route, useNavigate, useParams, useLocation, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { PetProvider, usePet } from "./context/PetContext";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { PetProvider } from "./context/PetContext";
+import { AuthProvider } from "./context/AuthContext";
+import { useAuth } from "./hooks/useAuth";
+import { usePet } from "./hooks/usePet";
 import { AnimatePresence } from "framer-motion";
 import Navbar from "./components/Layout/Navbar";
 import ScrollToTop from "./components/UI/ScrollToTop";

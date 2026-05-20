@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslation } from "react-i18next";
-import { usePet } from "../../context/PetContext";
+import { usePet } from "../../hooks/usePet";
 import { formatDate, getDaysUntil, isOverdue, isUpcoming } from "../../utils/dateHelpers";
 import Button from "../UI/Button";
 import Modal from "../UI/Modal";

@@ -6,7 +6,7 @@ import {
 import {
   SortableContext, verticalListSortingStrategy, arrayMove,
 } from "@dnd-kit/sortable";
-import { usePet } from "../../context/PetContext";
+import { usePet } from "../../hooks/usePet";
 import { getTypeAliases } from "../../utils/recordTypes";
 import RecordCard from "./RecordCard";
 import Modal from "../UI/Modal";

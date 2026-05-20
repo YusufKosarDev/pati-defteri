@@ -1,12 +1,13 @@
 import { internalQuery } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
 
-function daysUntil(dateStr) {
+function daysUntil(dateStr: string | undefined | null): number | null {
   if (!dateStr) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const target = new Date(dateStr);
   target.setHours(0, 0, 0, 0);
-  return Math.round((target - today) / (1000 * 60 * 60 * 24));
+  return Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export const collectReminders = internalQuery({
@@ -42,8 +43,8 @@ export const collectReminders = internalQuery({
         .query("pets")
         .withIndex("by_user", (q) => q.eq("userId", userId))
         .collect();
-      const petName = (petId) =>
-        pets.find((p) => p._id === petId)?.name ?? "Bilinmeyen";
+      const petName = (petId: Id<"pets">) =>
+        pets.find((p: Doc<"pets">) => p._id === petId)?.name ?? "Bilinmeyen";
 
       const lines = [];
       if (overdue.length > 0) {

@@ -1,4 +1,5 @@
 import { Component } from "react";
+import { captureException } from "../../lib/sentry";
 
 function getLang() {
   try {
@@ -19,7 +20,7 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("ErrorBoundary caught:", error, errorInfo);
+    captureException(error, { componentStack: errorInfo?.componentStack });
   }
 
   render() {

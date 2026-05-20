@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "convex/react";
-import { usePet } from "../context/PetContext";
-import { useAuth } from "../context/AuthContext";
+import { usePet } from "../hooks/usePet";
+import { useAuth } from "../hooks/useAuth";
 import useNotifications from "../hooks/useNotifications";
 import useEmailReminder from "../hooks/useEmailReminder";
 import usePageTitle from "../hooks/usePageTitle";

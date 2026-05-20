@@ -1,9 +1,9 @@
-import { createContext, useContext } from "react";
+import { useEffect } from "react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../convex/_generated/api";
-
-const AuthContext = createContext();
+import { AuthContext } from "../hooks/useAuth";
+import { identifyUser } from "../lib/sentry";
 
 export function AuthProvider({ children }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
@@ -19,6 +19,10 @@ export function AuthProvider({ children }) {
         isGuest: viewer.isAnonymous,
       }
     : null;
+
+  useEffect(() => {
+    identifyUser(user);
+  }, [user?.id]);
 
   const register = async (name, email, password) => {
     try {
@@ -93,8 +97,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }

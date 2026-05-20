@@ -1,14 +1,15 @@
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 
-async function requireUser(ctx) {
+async function requireUser(ctx: QueryCtx | MutationCtx) {
   const userId = await getAuthUserId(ctx);
   if (!userId) throw new Error("Oturum açık değil.");
   return userId;
 }
 
-async function requireOwnedRecord(ctx, recordId) {
+async function requireOwnedRecord(ctx: MutationCtx, recordId: Id<"records">) {
   const userId = await requireUser(ctx);
   const record = await ctx.db.get(recordId);
   if (!record || record.userId !== userId) {
@@ -17,7 +18,7 @@ async function requireOwnedRecord(ctx, recordId) {
   return { userId, record };
 }
 
-async function requireOwnedPet(ctx, petId) {
+async function requireOwnedPet(ctx: MutationCtx, petId: Id<"pets">) {
   const userId = await requireUser(ctx);
   const pet = await ctx.db.get(petId);
   if (!pet || pet.userId !== userId) {

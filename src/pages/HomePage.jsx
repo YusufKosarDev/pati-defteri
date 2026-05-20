@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { usePet } from "../context/PetContext";
-import { useAuth } from "../context/AuthContext";
+import { usePet } from "../hooks/usePet";
+import { useAuth } from "../hooks/useAuth";
 import PetList from "../components/Pet/PetList";
 import SummaryBanner from "../components/UI/SummaryBanner";
 import DemoLoader from "../components/UI/DemoLoader";

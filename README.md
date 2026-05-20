@@ -99,9 +99,10 @@
 
 - **Frontend:** Vite + React, tüm UI client-side
 - **Backend:** Convex — gerçek-zamanlı Postgres + sunucu fonksiyonları + dosya depolama
-- **Auth:** `@convex-dev/auth` — Anonymous (misafir) + Password (kayıt) provider'ları
+- **Auth:** `@convex-dev/auth` — Anonymous (misafir) + Password (kayıt) provider'ları, her mutation server-side ownership guard'ı ile korunur
 - **Storage:** Hayvan fotoğrafları Convex Storage (CDN), DB satırlarına gömülmez
 - **Bildirim:** Convex action içinde `web-push` ile VAPID push; günlük cron tarama
+- **Observability:** Sentry (opsiyonel) — error + replay-on-error
 - **Hosting:** Vercel (frontend) + Convex deployment (backend)
 
 ---
@@ -132,13 +133,17 @@
 | web-push | VAPID tabanlı Web Push |
 | Resend | E-posta hatırlatıcıları |
 
-### Test & CI
+### Test & Kalite
 | Paket | Kullanım |
 |-------|----------|
-| Vitest + jsdom | Unit testler |
-| Playwright | E2E + otomatik ekran görüntüsü |
-| GitHub Actions | CI (lint · test · build) |
-| ESLint | Statik analiz |
+| TypeScript | Tip güvenliği (strict mode, allowJs ile aşamalı geçiş) |
+| Vitest + jsdom | Client unit testler |
+| convex-test + edge-runtime | Convex backend entegrasyon testleri (auth + ownership) |
+| Playwright | Otomatik ekran görüntüsü |
+| GitHub Actions | CI (lint · typecheck · test · build) |
+| ESLint + react/react-hooks | Statik analiz, anti-pattern yakalama |
+| husky + lint-staged | Pre-commit hook (lint + typecheck + test) |
+| Sentry | Production hata izleme + session replay (error-only) |
 
 ---
 
@@ -159,7 +164,8 @@ npm run dev
 
 ```ini
 VITE_CONVEX_URL=          # npx convex dev otomatik doldurur
-VITE_VAPID_PUBLIC_KEY=    # Web Push için VAPID public key
+VITE_VAPID_PUBLIC_KEY=    # Web Push için VAPID public key (opsiyonel)
+VITE_SENTRY_DSN=          # Production hata izleme (opsiyonel)
 ```
 
 Web Push anahtarları üretmek için:
@@ -181,14 +187,25 @@ npx convex env set VAPID_SUBJECT     "mailto:senin@email.com"
 ## 🧪 Test & Kalite Kontrol
 
 ```bash
-npm run test         # Vitest unit testler (tek seferlik)
+npm run lint         # ESLint (0 hata politikası)
+npm run typecheck    # tsc --noEmit (strict mode)
+npm run test         # Vitest — client (jsdom) + convex (edge-runtime) projeleri
 npm run test:watch   # İzleme modu
-npm run lint         # ESLint
 npm run build        # Üretim derlemesi
 npm run screenshots  # README ekran görüntülerini yeniden üret (Playwright)
 ```
 
-Her push ve PR'de GitHub Actions otomatik olarak test + build çalıştırır (`.github/workflows/ci.yml`).
+### Üç katmanlı kalite koruması
+
+1. **Pre-commit hook** (`.husky/pre-commit`) — `lint-staged` (max-warnings=0) + `typecheck` + tüm testler. Kırık kod commit edilemez.
+2. **PR template** (`.github/PULL_REQUEST_TEMPLATE.md`) — kod, güvenlik, test, UI ve performans kategorilerinde self-review checklist.
+3. **GitHub Actions** (`.github/workflows/ci.yml`) — her push/PR'de `lint · typecheck · test · build` dördü de zorunlu.
+
+### Test mimarisi
+
+Vitest iki proje config'i kullanır:
+- **`client`** projesi (`jsdom` env) — React komponent ve util testleri.
+- **`convex`** projesi (`edge-runtime` env) — `convex-test` ile gerçek mutation/query'ler, auth + ownership davranışı sabit testlerle korunur.
 
 ---
 
@@ -211,13 +228,17 @@ Her push ve PR'de GitHub Actions otomatik olarak test + build çalıştırır (`
 ├─ src/
 │  ├─ pages/            # LandingPage, HomePage, PetDetailPage, ...
 │  ├─ components/       # Pet, Record, Weight, Vet, Layout, UI
-│  ├─ context/          # AuthContext, PetContext
-│  ├─ hooks/            # useNotifications, useConfetti, ...
-│  ├─ utils/            # dateHelpers + testleri
-│  └─ i18n/             # tr + en
+│  ├─ context/          # AuthProvider, PetProvider (sadece JSX)
+│  ├─ hooks/            # useAuth, usePet, useNotifications, useConfetti, ...
+│  ├─ lib/              # convex client, sentry init
+│  ├─ utils/            # dateHelpers, recordTypes (TS) + testleri
+│  ├─ i18n/             # tr + en
+│  └─ vite-env.d.ts     # Vite env var tipleri
 ├─ public/              # PWA manifest, sw.js, ikonlar
 ├─ scripts/             # screenshots.mjs
-└─ .github/workflows/   # ci.yml
+└─ .github/
+   ├─ workflows/ci.yml             # lint · typecheck · test · build
+   └─ PULL_REQUEST_TEMPLATE.md     # Self-review checklist
 ```
 
 ---

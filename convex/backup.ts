@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation } from "./_generated/server";
+import { mutation, type MutationCtx, type QueryCtx } from "./_generated/server";
 
 const vetArg = v.object({
   clinicName: v.optional(v.string()),
@@ -36,7 +36,7 @@ const weightArg = v.object({
   notes: v.optional(v.string()),
 });
 
-async function requireUser(ctx) {
+async function requireUser(ctx: QueryCtx | MutationCtx) {
   const userId = await getAuthUserId(ctx);
   if (!userId) throw new Error("Oturum açık değil.");
   return userId;

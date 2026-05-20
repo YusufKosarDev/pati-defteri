@@ -12,9 +12,14 @@ export default defineConfig([
     plugins: { react },
     extends: [
       js.configs.recommended,
+      react.configs.flat.recommended,
+      react.configs.flat['jsx-runtime'],
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],
+    settings: {
+      react: { version: 'detect' },
+    },
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
@@ -27,6 +32,13 @@ export default defineConfig([
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]', caughtErrors: 'none' }],
       'react/jsx-uses-vars': 'error',
+      'react/prop-types': 'off',
+      'react/no-unescaped-entities': 'off',
+      'react/no-unstable-nested-components': 'error',
+      'react/no-array-index-key': 'warn',
+      'react/jsx-no-useless-fragment': 'warn',
+      'react/jsx-no-target-blank': ['error', { allowReferrer: false }],
+      'react/self-closing-comp': 'warn',
     },
   },
   {

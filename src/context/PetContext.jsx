@@ -1,12 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import useLocalStorage from "../hooks/useLocalStorage";
 import toast from "react-hot-toast";
 import i18n from "../i18n/index.js";
 import { api } from "../../convex/_generated/api";
-
-const PetContext = createContext();
+import { PetContext } from "../hooks/usePet";
 
 export function PetProvider({ children }) {
   const { isAuthenticated } = useAuth();
@@ -156,8 +155,4 @@ export function PetProvider({ children }) {
       {children}
     </PetContext.Provider>
   );
-}
-
-export function usePet() {
-  return useContext(PetContext);
 }

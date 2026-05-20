@@ -1,4 +1,4 @@
-import { usePet } from "../../context/PetContext";
+import { usePet } from "../../hooks/usePet";
 import { formatDate, calculateAge } from "../../utils/dateHelpers";
 import Button from "./Button";
 import jsPDF from "jspdf";
