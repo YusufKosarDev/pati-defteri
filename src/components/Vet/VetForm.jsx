@@ -32,7 +32,7 @@ function VetForm({ petId, onClose, existingVet = null, vetIndex = null }) {
       updatedVets = [...currentVets, form];
     }
 
-    updatePet(petId, { ...pet, vets: updatedVets, vet: undefined });
+    updatePet(petId, { vets: updatedVets });
     onClose();
   };
 

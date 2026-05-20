@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useCallback } from "react";
+import { useState, lazy, Suspense, useMemo } from "react";
 import { BrowserRouter, Routes, Route, useNavigate, useParams, useLocation, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { PetProvider, usePet } from "./context/PetContext";
@@ -86,11 +86,12 @@ function AppRoutes() {
   const isLanding = location.pathname === "/";
   const isAuth = location.pathname === "/auth";
 
-  useKeyboard(useCallback({
+  const shortcuts = useMemo(() => ({
     "ctrl+k": () => { if (isAuthenticated) setSearchOpen(true); },
     "ctrl+h": () => { if (isAuthenticated) navigate("/app"); },
     "ctrl+,": () => { if (isAuthenticated) navigate("/settings"); },
-  }, [isAuthenticated, navigate]));
+  }), [isAuthenticated, navigate]);
+  useKeyboard(shortcuts);
 
   return (
     <div className={`min-h-screen bg-gray-950 transition-colors duration-200 ${!isLanding && !isAuth ? "md:pl-56 pt-14 md:pt-0" : ""}`}>

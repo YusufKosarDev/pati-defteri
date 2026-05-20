@@ -7,7 +7,6 @@ import {
 import { usePet } from "../context/PetContext";
 import { isOverdue, isUpcoming, getDaysUntil } from "../utils/dateHelpers";
 import usePageTitle from "../hooks/usePageTitle";
-import Navbar from "../components/Layout/Navbar";
 
 const COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899", "#f97316"];
 
@@ -146,7 +145,6 @@ function StatsPage() {
   if (pets.length === 0) {
     return (
       <div className="min-h-screen bg-gray-950">
-        <Navbar />
         <div className="max-w-5xl mx-auto px-6 py-8 text-center">
           <div className="text-6xl mb-4">📊</div>
           <p className="text-gray-400 text-lg font-medium">
@@ -159,7 +157,6 @@ function StatsPage() {
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <Navbar />
       <div className="max-w-5xl mx-auto px-6 py-8">
 
         {/* Başlık */}

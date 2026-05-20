@@ -168,7 +168,7 @@ function VetCard({ pet }) {
 
   const handleDelete = (index) => {
     const updatedVets = vets.filter((_, i) => i !== index);
-    updatePet(pet.id, { ...pet, vets: updatedVets });
+    updatePet(pet.id, { vets: updatedVets });
     setDeleteIndex(null);
   };
 

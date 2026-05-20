@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { usePet } from "../context/PetContext";
 import { formatDate } from "../utils/dateHelpers";
-import Navbar from "../components/Layout/Navbar";
 import usePageTitle from "../hooks/usePageTitle";
 
 const RECORD_ICONS = {
@@ -90,7 +89,6 @@ function CalendarPage() {
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <Navbar />
       <div className="max-w-5xl mx-auto px-6 py-8">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
