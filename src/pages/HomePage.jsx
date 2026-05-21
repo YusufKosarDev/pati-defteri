@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
 import { usePet } from "../hooks/usePet";
 import { useAuth } from "../hooks/useAuth";
+import { useLoadDemoData } from "../hooks/useDemoData";
 import PetList from "../components/Pet/PetList";
 import SummaryBanner from "../components/UI/SummaryBanner";
 import DemoLoader from "../components/UI/DemoLoader";
@@ -56,16 +58,34 @@ function HomePage({ onSelectPet }) {
 
   const [onboardingSeen] = useLocalStorage("onboarding_seen", false);
   const [demoShown, setDemoShown] = useLocalStorage(`demo_shown_${user?.id}`, false);
+  const loadDemoData = useLoadDemoData();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       setLoading(false);
-      if (onboardingSeen && !demoShown && pets.length === 0) {
+      if (demoShown || pets.length > 0) return;
+
+      // Misafir kullanıcılar için demo otomatik yüklensin — LinkedIn ziyaretçisi
+      // ilk girdiğinde boş ekran yerine dolu uygulama görsün.
+      if (user?.isGuest) {
+        try {
+          await loadDemoData();
+          toast.success(isEN ? "Demo pets loaded for you 🐾" : "Senin için demo hayvanlar yüklendi 🐾");
+        } catch (err) {
+          console.error(err);
+        }
+        setDemoShown(true);
+        return;
+      }
+
+      // Kayıtlı kullanıcılar için onboarding sonrası modal ile sor
+      if (onboardingSeen) {
         setShowDemo(true);
       }
     }, 600);
     return () => clearTimeout(timer);
-  }, [onboardingSeen, demoShown, pets.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onboardingSeen, demoShown, pets.length, user?.isGuest]);
 
   const handleDemoClose = () => {
     setShowDemo(false);

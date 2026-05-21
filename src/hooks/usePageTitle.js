@@ -14,6 +14,8 @@ function usePageTitle(title) {
         ? `${appName} — Pet Care Journal`
         : `${appName} — Evcil Hayvan Bakım Günlüğü`;
     }
+    // <html lang> dil seçimiyle senkronize — ekran okuyucular doğru dilde okusun
+    document.documentElement.lang = isEN ? "en" : "tr";
 
     return () => {
       document.title = appName;

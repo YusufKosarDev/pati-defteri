@@ -2,7 +2,17 @@
 
 > Evcil hayvanlarınızın aşı, bakım ve sağlık geçmişini tek bir yerden takip etmenizi sağlayan tam-yığın (fullstack) web uygulaması.
 
+[![CI](https://github.com/YusufKosarDev/pati-defteri/actions/workflows/ci.yml/badge.svg)](https://github.com/YusufKosarDev/pati-defteri/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![Convex](https://img.shields.io/badge/Convex-backend-EE342F)
+![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8)
+![Lighthouse](https://img.shields.io/badge/Best%20Practices-100-brightgreen)
+
 **🌐 Canlı Demo:** [pati-defteri.vercel.app](https://pati-defteri.vercel.app)
+
+> 💡 **"Misafir olarak devam et"** ile demoyu hemen dene — örnek hayvanlar ve kayıtlar otomatik yüklenir.
 
 ---
 
@@ -240,6 +250,28 @@ Vitest iki proje config'i kullanır:
    ├─ workflows/ci.yml             # lint · typecheck · test · build
    └─ PULL_REQUEST_TEMPLATE.md     # Self-review checklist
 ```
+
+---
+
+## 🗺️ Roadmap
+
+Aktif geliştirilen / planlanan özellikler:
+
+- [ ] **Multi-user pet sharing** — eşler/aile bireyleri arasında pet'i ortak yönet
+- [ ] **iCal / Google Calendar sync** — hatırlatıcıları takvim uygulamasına ekle
+- [ ] **Aşı protokol şablonları** — yaşa/türe göre veteriner-önerili otomatik program
+- [ ] **Sentry + custom analytics dashboard** — hangi feature'ın ne kadar kullanıldığı
+- [ ] **Modal focus trap** — tam WCAG AA uyumu için (şu an a11y skoru 87)
+- [ ] **Apple Health / Google Fit ağırlık entegrasyonu**
+- [ ] **Hayvan medikal geçmiş zaman çizelgesi** — kronolojik tek görünüm
+
+Önerilerin için issue aç → [github.com/YusufKosarDev/pati-defteri/issues](https://github.com/YusufKosarDev/pati-defteri/issues)
+
+---
+
+## 📄 Lisans
+
+MIT — bkz. [LICENSE](LICENSE).
 
 ---
 

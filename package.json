@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "preview": "vite preview",
     "screenshots": "node scripts/screenshots.mjs",
+    "demo:record": "node scripts/demo-recording.mjs",
     "prepare": "husky"
   },
   "lint-staged": {

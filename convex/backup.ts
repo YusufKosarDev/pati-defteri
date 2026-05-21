@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { checkRateLimit } from "./rateLimit";
 
 const vetArg = v.object({
   clinicName: v.optional(v.string()),
@@ -57,6 +58,8 @@ export const replaceAll = mutation({
   },
   handler: async (ctx, { pets, records, weights }) => {
     const userId = await requireUser(ctx);
+    // Demo loader bot abuse'a karşı: dakikada max 5 toplu içe aktarma
+    await checkRateLimit(ctx, userId, "backup.replaceAll", 5, 60_000);
 
     // Mevcut veriyi sil
     const oldPets = await ctx.db

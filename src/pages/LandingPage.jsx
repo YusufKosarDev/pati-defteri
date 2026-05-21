@@ -146,7 +146,7 @@ function LandingPage() {
                   key={lang}
                   onClick={() => setLanguage(lang)}
                   className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                    language === lang ? "bg-[#2D2D2D] text-white" : "text-gray-400 hover:text-gray-600"
+                    language === lang ? "bg-[#2D2D2D] text-white" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   {lang === "tr" ? "🇹🇷 TR" : "🇬🇧 EN"}
@@ -155,7 +155,7 @@ function LandingPage() {
             </div>
             <button
               onClick={() => navigate("/auth")}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded-full text-sm font-medium transition-all hover:shadow-lg hover:shadow-emerald-500/20 cursor-pointer"
+              className="bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2 rounded-full text-sm font-semibold transition-all hover:shadow-lg hover:shadow-emerald-700/20 cursor-pointer"
             >
               {t("enterApp")}
             </button>
@@ -234,7 +234,7 @@ function LandingPage() {
             >
               {t("landingCTA")} →
             </motion.button>
-            <span className="text-sm text-[#999]">{t("landingNoAccount")}</span>
+            <span className="text-sm text-[#666]">{t("landingNoAccount")}</span>
           </motion.div>
         </div>
 
@@ -490,7 +490,7 @@ function LandingPage() {
                   </div>
                   <div>
                     <div className="font-bold text-[#2D2D2D] text-sm">{item.name}</div>
-                    <div className="text-[#999] text-xs">{item.pet}</div>
+                    <div className="text-[#666] text-xs">{item.pet}</div>
                   </div>
                 </div>
               </motion.div>
@@ -556,14 +556,14 @@ function LandingPage() {
                   key={lang}
                   onClick={() => setLanguage(lang)}
                   className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                    language === lang ? "bg-[#2D2D2D] text-white" : "text-gray-400 hover:text-gray-600"
+                    language === lang ? "bg-[#2D2D2D] text-white" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   {lang === "tr" ? "🇹🇷 TR" : "🇬🇧 EN"}
                 </button>
               ))}
             </div>
-            <p className="text-[#999] text-sm">{t("landingFooter")}</p>
+            <p className="text-[#666] text-sm">{t("landingFooter")}</p>
           </div>
         </div>
       </footer>

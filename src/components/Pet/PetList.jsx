@@ -102,15 +102,17 @@ function PetList({ onSelectPet }) {
           className="flex gap-2 mb-4"
         >
           <input
-            type="text"
+            type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("searchPet")}
+            aria-label={t("searchPet")}
             className="flex-1 border border-gray-700 bg-gray-800 text-gray-100 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 placeholder-gray-500"
           />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
+            aria-label={isEN ? "Sort by" : "Sıralama"}
             className="bg-gray-800 border border-gray-700 text-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
           >
             {sortOptions.map((opt) => (

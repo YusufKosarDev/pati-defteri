@@ -101,6 +101,7 @@ function AppRoutes() {
       <ScrollToTop />
       <Navbar searchOpen={searchOpen} setSearchOpen={setSearchOpen} />
       <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <main id="main-content">
       <Suspense fallback={<PageLoader />}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
@@ -139,6 +140,7 @@ function AppRoutes() {
           </Routes>
         </AnimatePresence>
       </Suspense>
+      </main>
     </div>
   );
 }

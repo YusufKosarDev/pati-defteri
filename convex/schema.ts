@@ -59,4 +59,12 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_endpoint", ["endpoint"]),
+
+  // Kullanıcı başına işlem sayacı — bkz. convex/rateLimit.ts
+  rateLimits: defineTable({
+    userId: v.id("users"),
+    key: v.string(),
+    count: v.number(),
+    windowStart: v.number(),
+  }).index("by_user_key", ["userId", "key"]),
 });
