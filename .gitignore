@@ -31,11 +31,3 @@ dist-ssr
 # Lighthouse audit reports
 lh-*.json
 psi-*.json
-
-# Demo recording output
-scripts/output/
-*.webm
-*.mp4
-*.gif
-!screenshot-*.png
-!*.svg
