@@ -31,3 +31,6 @@ dist-ssr
 # Lighthouse audit reports
 lh-*.json
 psi-*.json
+
+# Kişisel notlar / yayın taslakları — repo dışı kalır
+docs/LINKEDIN_POST.md
