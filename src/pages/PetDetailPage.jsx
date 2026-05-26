@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { formatDate, calculateAge, getAvatarGradient } from "../utils/dateHelpers";
@@ -8,7 +8,6 @@ import VetCard from "../components/Vet/VetCard";
 import Button from "../components/UI/Button";
 import ExportButton from "../components/UI/ExportButton";
 import QRModal from "../components/UI/QRModal";
-import { RecordCardSkeleton, SkeletonBox } from "../components/UI/Skeleton";
 import usePageTitle from "../hooks/usePageTitle";
 
 const tabs = [
@@ -18,43 +17,15 @@ const tabs = [
 ];
 
 function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }) {
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [qrOpen, setQrOpen] = useState(false);
   const { t } = useTranslation();
 
   usePageTitle(pet?.name);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
   const age = calculateAge(pet.birthDate);
   const gradient = getAvatarGradient(pet.name);
   const emoji = pet.type === "Kedi" || pet.type === "Cat" ? "🐱" : pet.type === "Köpek" || pet.type === "Dog" ? "🐶" : "🐾";
-
-  if (loading) {
-    return (
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <SkeletonBox className="h-10 w-20" />
-          <SkeletonBox className="h-10 w-28" />
-        </div>
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 mb-6 flex items-center gap-5">
-          <SkeletonBox className="w-20 h-20 rounded-2xl" />
-          <div className="flex flex-col gap-2 flex-1">
-            <SkeletonBox className="h-7 w-40" />
-            <SkeletonBox className="h-4 w-32" />
-            <SkeletonBox className="h-4 w-24" />
-          </div>
-        </div>
-        <div className="flex flex-col gap-3">
-          {[1, 2, 3].map((i) => <RecordCardSkeleton key={i} />)}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">

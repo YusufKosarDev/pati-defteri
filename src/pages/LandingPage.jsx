@@ -171,7 +171,7 @@ function LandingPage() {
 
         {["🐾", "🐱", "🐶", "💉", "🎂", "⚖️"].map((icon, i) => (
           <motion.div
-            key={i}
+            key={icon}
             className="absolute text-2xl pointer-events-none select-none opacity-20"
             style={{ left: `${10 + (i * 15)}%`, top: `${15 + (i % 3) * 20}%` }}
             animate={{ y: [0, -15, 0], rotate: [0, 10, -10, 0] }}
@@ -479,8 +479,8 @@ function LandingPage() {
                 className="bg-[#FAFAF7] rounded-3xl p-6 border border-[#E8E8E0] shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex gap-1 mb-4">
-                  {Array(item.rating).fill(0).map((_, j) => (
-                    <span key={j} className="text-yellow-400 text-sm">⭐</span>
+                  {["s1", "s2", "s3", "s4", "s5"].slice(0, item.rating).map((s) => (
+                    <span key={`${item.name}-${s}`} className="text-yellow-400 text-sm">⭐</span>
                   ))}
                 </div>
                 <p className="text-[#444] text-sm leading-relaxed mb-6">"{item.text}"</p>

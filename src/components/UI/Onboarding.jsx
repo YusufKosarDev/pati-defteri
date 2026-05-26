@@ -84,9 +84,9 @@ function Onboarding({ onFinish }) {
 
           {/* Dots */}
           <div className="flex items-center justify-center gap-2 mt-8 mb-6">
-            {steps.map((_, i) => (
+            {steps.map((s, i) => (
               <button
-                key={i}
+                key={s.title}
                 onClick={() => setStep(i)}
                 className={`rounded-full transition-all cursor-pointer ${
                   i === step

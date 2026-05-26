@@ -237,8 +237,8 @@ function AuthPage() {
 
           <p className="text-center text-xs text-gray-600 mt-4">
             ⚠️ {isEN
-              ? "Guest sessions stay on this device. Data is permanently lost when you log out or clear browser storage."
-              : "Misafir oturum bu cihazda saklanır. Çıkış yaparsanız veya tarayıcı verilerini temizlerseniz veriler kalıcı olarak silinir."}
+              ? "Guest data is tied to this browser session. If you log out without creating an account, you'll lose access to it — you can upgrade to a permanent account anytime from Settings."
+              : "Misafir verileri bu tarayıcı oturumuna bağlıdır. Hesap oluşturmadan çıkış yaparsanız bu verilere erişiminizi kaybedersiniz — Ayarlar'dan istediğiniz zaman kalıcı hesaba yükseltebilirsiniz."}
           </p>
         </div>
       </motion.div>

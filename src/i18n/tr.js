@@ -146,10 +146,10 @@ const tr = {
   notificationDefault: "Kapalı",
   about: "Uygulama Hakkında",
   storage: "Veri Depolama",
-  storageDesc: "Tüm veriler cihazınızda saklanır",
-  storageLocal: "Yerel",
+  storageDesc: "Veriler Convex bulutunda saklanır, cihazlar arası senkronize olur",
+  storageLocal: "Bulut",
   privacy: "Gizlilik",
-  privacyDesc: "Hiçbir veri sunucuya gönderilmez",
+  privacyDesc: "Verilerinize yalnızca kendi hesabınız erişebilir",
   privacySecure: "Güvenli",
 
   // Backup

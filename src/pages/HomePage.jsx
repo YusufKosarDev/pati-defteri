@@ -47,9 +47,8 @@ function QuickInsight({ icon, text, color }) {
 }
 
 function HomePage({ onSelectPet }) {
-  const [loading, setLoading] = useState(true);
   const [showDemo, setShowDemo] = useState(false);
-  const { pets, records, weights } = usePet();
+  const { pets, records, weights, loading } = usePet();
   const { user } = useAuth();
   const { i18n } = useTranslation();
   const isEN = i18n.language === "en";
@@ -61,13 +60,14 @@ function HomePage({ onSelectPet }) {
   const loadDemoData = useLoadDemoData();
 
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      setLoading(false);
-      if (demoShown || pets.length > 0) return;
+    // Veri gerçekten yüklenene kadar demo kararını verme.
+    if (loading) return;
+    if (demoShown || pets.length > 0) return;
 
-      // Misafir kullanıcılar için demo otomatik yüklensin — LinkedIn ziyaretçisi
-      // ilk girdiğinde boş ekran yerine dolu uygulama görsün.
-      if (user?.isGuest) {
+    // Misafir kullanıcılar için demo otomatik yüklensin — LinkedIn ziyaretçisi
+    // ilk girdiğinde boş ekran yerine dolu uygulama görsün.
+    if (user?.isGuest) {
+      (async () => {
         try {
           await loadDemoData();
           toast.success(isEN ? "Demo pets loaded for you 🐾" : "Senin için demo hayvanlar yüklendi 🐾");
@@ -75,17 +75,16 @@ function HomePage({ onSelectPet }) {
           console.error(err);
         }
         setDemoShown(true);
-        return;
-      }
+      })();
+      return;
+    }
 
-      // Kayıtlı kullanıcılar için onboarding sonrası modal ile sor
-      if (onboardingSeen) {
-        setShowDemo(true);
-      }
-    }, 600);
-    return () => clearTimeout(timer);
+    // Kayıtlı kullanıcılar için onboarding sonrası modal ile sor
+    if (onboardingSeen) {
+      setShowDemo(true);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onboardingSeen, demoShown, pets.length, user?.isGuest]);
+  }, [loading, onboardingSeen, demoShown, pets.length, user?.isGuest]);
 
   const handleDemoClose = () => {
     setShowDemo(false);
@@ -244,8 +243,8 @@ function HomePage({ onSelectPet }) {
                 transition={{ delay: 0.4 }}
                 className="flex flex-wrap gap-2 mb-6"
               >
-                {insights.map((insight, i) => (
-                  <QuickInsight key={i} {...insight} />
+                {insights.map((insight) => (
+                  <QuickInsight key={insight.text} {...insight} />
                 ))}
               </motion.div>
             )}

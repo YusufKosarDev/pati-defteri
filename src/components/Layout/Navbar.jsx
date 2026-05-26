@@ -311,8 +311,8 @@ function Navbar({ setSearchOpen }) {
         onConfirm={confirmLogout}
         title={isEN ? "Are you sure?" : "Emin misiniz?"}
         desc={isEN
-          ? "You're a guest user. All your data will be deleted when you log out!"
-          : "Misafir kullanıcısınız. Çıkış yaparsanız tüm verileriniz silinecek!"}
+          ? "You're a guest. If you log out without upgrading to an account, you'll lose access to your data. You can upgrade from Settings."
+          : "Misafir kullanıcısınız. Hesaba yükseltmeden çıkış yaparsanız verilerinize erişiminizi kaybedersiniz. Ayarlar'dan yükseltebilirsiniz."}
         confirmText={isEN ? "Logout" : "Çıkış Yap"}
       />
     </>

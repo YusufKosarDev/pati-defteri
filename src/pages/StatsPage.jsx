@@ -15,8 +15,8 @@ function CustomTooltip({ active, payload, label }) {
     return (
       <div className="bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-xs">
         <p className="text-gray-300 font-medium mb-1">{label}</p>
-        {payload.map((p, i) => (
-          <p key={i} style={{ color: p.color }} className="font-medium">
+        {payload.map((p) => (
+          <p key={p.dataKey ?? p.name} style={{ color: p.color }} className="font-medium">
             {p.name}: {p.value}
           </p>
         ))}
@@ -237,8 +237,8 @@ function StatsPage() {
                     paddingAngle={3}
                     dataKey="value"
                   >
-                    {typeData().map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    {typeData().map((entry, i) => (
+                      <Cell key={entry.name} fill={COLORS[i % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />

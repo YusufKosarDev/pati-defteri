@@ -81,13 +81,13 @@ function NotFoundPage() {
           transition={{ delay: 0.7 }}
           className="mt-12 flex justify-center gap-4 text-3xl"
         >
-          {["🐾", "🐾", "🐾"].map((p, i) => (
+          {["paw-1", "paw-2", "paw-3"].map((key, i) => (
             <motion.span
-              key={i}
+              key={key}
               animate={{ opacity: [0.2, 1, 0.2] }}
               transition={{ repeat: Infinity, duration: 2, delay: i * 0.4 }}
             >
-              {p}
+              🐾
             </motion.span>
           ))}
         </motion.div>

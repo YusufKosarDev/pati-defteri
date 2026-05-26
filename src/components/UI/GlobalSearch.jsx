@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { usePet } from "../../hooks/usePet";
@@ -28,35 +28,35 @@ function GlobalSearch({ isOpen, onClose }) {
     }
   }, [isOpen]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setQuery("");
     onClose();
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") handleClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  });
+  }, [onClose]);
 
   const q = query.toLowerCase().trim();
 
-  const filteredPets = q
-    ? pets.filter((p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.breed?.toLowerCase().includes(q) ||
-        p.type?.toLowerCase().includes(q)
-      )
-    : [];
+  const filteredPets = useMemo(
+    () =>
+      q
+        ? pets.filter((p) =>
+            p.name.toLowerCase().includes(q) ||
+            p.breed?.toLowerCase().includes(q) ||
+            p.type?.toLowerCase().includes(q)
+          )
+        : [],
+    [q, pets]
+  );
 
-  const filteredRecords = q
-    ? records.filter((r) =>
-        matchesType(r.type, q) ||
-        r.notes?.toLowerCase().includes(q)
-      )
-    : [];
+  const filteredRecords = useMemo(
+    () =>
+      q
+        ? records.filter((r) =>
+            matchesType(r.type, q) ||
+            r.notes?.toLowerCase().includes(q)
+          )
+        : [],
+    [q, records]
+  );
 
   const getPetName = (petId) => pets.find((p) => p.id === petId)?.name || "";
   const getPetAvatar = (petId) => {
@@ -65,15 +65,30 @@ function GlobalSearch({ isOpen, onClose }) {
     return { initial: pet.name?.charAt(0).toUpperCase(), color: getAvatarColor(pet.name) };
   };
 
-  const handleSelectPet = (pet) => {
+  const handleSelectPet = useCallback((pet) => {
     navigate(`/pets/${pet.id}`);
     handleClose();
-  };
+  }, [navigate, handleClose]);
 
-  const handleSelectRecord = (record) => {
+  const handleSelectRecord = useCallback((record) => {
     navigate(`/pets/${record.petId}`);
     handleClose();
-  };
+  }, [navigate, handleClose]);
+
+  // Esc kapatır; Enter ilk sonucu (önce hayvanlar, sonra kayıtlar) seçer.
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        handleClose();
+      } else if (e.key === "Enter") {
+        if (filteredPets.length > 0) handleSelectPet(filteredPets[0]);
+        else if (filteredRecords.length > 0) handleSelectRecord(filteredRecords[0]);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, filteredPets, filteredRecords, handleClose, handleSelectPet, handleSelectRecord]);
 
   const hasResults = filteredPets.length > 0 || filteredRecords.length > 0;
   const showEmpty = q.length > 0 && !hasResults;

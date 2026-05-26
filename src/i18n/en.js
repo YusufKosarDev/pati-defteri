@@ -146,10 +146,10 @@ const en = {
   notificationDefault: "Disabled",
   about: "About",
   storage: "Data Storage",
-  storageDesc: "All data stored on your device",
-  storageLocal: "Local",
+  storageDesc: "Data is stored in the Convex cloud and synced across devices",
+  storageLocal: "Cloud",
   privacy: "Privacy",
-  privacyDesc: "No data sent to any server",
+  privacyDesc: "Only your own account can access your data",
   privacySecure: "Secure",
 
   // Backup

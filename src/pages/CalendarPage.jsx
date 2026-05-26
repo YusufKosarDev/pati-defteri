@@ -40,9 +40,10 @@ function CalendarPage() {
   if (startOffset < 0) startOffset = 6;
 
   const totalDays = lastDay.getDate();
+  // Anahtarlar kurulum sırasında hesaplanır (map index'i anahtar olarak kullanılmaz).
   const cells = [];
-  for (let i = 0; i < startOffset; i++) cells.push(null);
-  for (let i = 1; i <= totalDays; i++) cells.push(i);
+  for (let i = 0; i < startOffset; i++) cells.push({ key: `lead-${i}`, day: null });
+  for (let d = 1; d <= totalDays; d++) cells.push({ key: `${year}-${month}-${d}`, day: d });
 
   const getRecordsForDay = (day) => {
     if (!day) return [];
@@ -130,8 +131,8 @@ function CalendarPage() {
               </div>
 
               <div className="grid grid-cols-7 gap-1">
-                {cells.map((day, i) => {
-                  if (!day) return <div key={`empty-${i}`} />;
+                {cells.map(({ key, day }) => {
+                  if (!day) return <div key={key} />;
                   const dayRecords = getRecordsForDay(day);
                   const hasRecords = dayRecords.length > 0;
                   const todayClass = isToday(day);
@@ -157,8 +158,8 @@ function CalendarPage() {
                       {day}
                       {hasRecords && (
                         <div className="flex gap-0.5 mt-0.5">
-                          {dayRecords.slice(0, 3).map((_, idx) => (
-                            <div key={idx} className={`w-1 h-1 rounded-full ${isSelected ? "bg-white" : "bg-emerald-500"}`} />
+                          {dayRecords.slice(0, 3).map((r) => (
+                            <div key={r.id} className={`w-1 h-1 rounded-full ${isSelected ? "bg-white" : "bg-emerald-500"}`} />
                           ))}
                         </div>
                       )}

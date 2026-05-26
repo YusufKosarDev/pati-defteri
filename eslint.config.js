@@ -6,7 +6,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'convex/_generated']),
   {
     files: ['**/*.{js,jsx}'],
     plugins: { react },
@@ -39,12 +39,6 @@ export default defineConfig([
       'react/jsx-no-useless-fragment': 'warn',
       'react/jsx-no-target-blank': ['error', { allowReferrer: false }],
       'react/self-closing-comp': 'warn',
-    },
-  },
-  {
-    files: ['api/**/*.js'],
-    languageOptions: {
-      globals: { ...globals.node },
     },
   },
   {
