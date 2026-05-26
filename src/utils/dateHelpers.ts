@@ -1,8 +1,25 @@
 import i18n from "../i18n/index";
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+/**
+ * "YYYY-MM-DD" string'ini YEREL gece yarısı olarak çözer. `new Date("YYYY-MM-DD")`
+ * UTC gece yarısı verir; bu, UTC gerisindeki saat dilimlerinde gün kaymasına yol
+ * açar. Tarih-saat içeren string'ler olduğu gibi parse edilir.
+ */
+export function parseLocalDate(dateString?: string | null): Date | null {
+  if (!dateString) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
+  if (m) {
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+  const d = new Date(dateString);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export function formatDate(dateString?: string | null): string {
-  if (!dateString) return "";
-  const date = new Date(dateString);
+  const date = parseLocalDate(dateString);
+  if (!date) return "";
   const isEN = i18n.language === "en";
   return date.toLocaleDateString(isEN ? "en-US" : "tr-TR", {
     day: "2-digit",
@@ -12,11 +29,13 @@ export function formatDate(dateString?: string | null): string {
 }
 
 export function getDaysUntil(dateString?: string | null): number | null {
-  if (!dateString) return null;
+  const target = parseLocalDate(dateString);
+  if (!target) return null;
   const today = new Date();
-  const target = new Date(dateString);
-  const diff = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  return diff;
+  today.setHours(0, 0, 0, 0);
+  target.setHours(0, 0, 0, 0);
+  // Her iki taraf da yerel gece yarısına hizalı; round DST ±1 saat sapmasını yutar.
+  return Math.round((target.getTime() - today.getTime()) / MS_PER_DAY);
 }
 
 export function isOverdue(dateString?: string | null): boolean {
@@ -30,8 +49,8 @@ export function isUpcoming(dateString?: string | null, withinDays = 30): boolean
 }
 
 export function calculateAge(birthDateString?: string | null): string | null {
-  if (!birthDateString) return null;
-  const birth = new Date(birthDateString);
+  const birth = parseLocalDate(birthDateString);
+  if (!birth) return null;
   const today = new Date();
   const isEN = i18n.language === "en";
 
@@ -59,20 +78,21 @@ export type BirthdayStatus =
   | { type: "upcoming"; daysUntil: number; age: number };
 
 export function getBirthdayStatus(birthDateString?: string | null): BirthdayStatus | null {
-  if (!birthDateString) return null;
+  const birth = parseLocalDate(birthDateString);
+  if (!birth) return null;
 
   const today = new Date();
-  const birth = new Date(birthDateString);
+  today.setHours(0, 0, 0, 0);
 
   const thisYearBirthday = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
-  const diff = Math.ceil((thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const diff = Math.round((thisYearBirthday.getTime() - today.getTime()) / MS_PER_DAY);
   const age = today.getFullYear() - birth.getFullYear();
 
   if (diff === 0) return { type: "today", daysUntil: 0, age };
   if (diff > 0 && diff <= 7) return { type: "upcoming", daysUntil: diff, age };
   if (diff < 0) {
     const nextYearBirthday = new Date(today.getFullYear() + 1, birth.getMonth(), birth.getDate());
-    const nextDiff = Math.ceil((nextYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const nextDiff = Math.round((nextYearBirthday.getTime() - today.getTime()) / MS_PER_DAY);
     if (nextDiff <= 7) return { type: "upcoming", daysUntil: nextDiff, age: age + 1 };
   }
 

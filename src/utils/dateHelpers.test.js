@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
+  parseLocalDate,
   getDaysUntil,
   isOverdue,
   isUpcoming,
@@ -15,7 +16,33 @@ function isoOffsetDays(offset) {
   return d.toISOString().slice(0, 10);
 }
 
+describe("parseLocalDate", () => {
+  it("parses YYYY-MM-DD as local midnight (no UTC day shift)", () => {
+    const d = parseLocalDate("2026-03-15");
+    // Yerel bileşenlerle kurulur → saat diliminden bağımsız aynı takvim günü.
+    expect(d?.getFullYear()).toBe(2026);
+    expect(d?.getMonth()).toBe(2); // Mart (0-indeksli)
+    expect(d?.getDate()).toBe(15);
+    expect(d?.getHours()).toBe(0);
+  });
+
+  it("returns null for falsy/invalid input", () => {
+    expect(parseLocalDate("")).toBe(null);
+    expect(parseLocalDate(null)).toBe(null);
+    expect(parseLocalDate("not-a-date")).toBe(null);
+  });
+});
+
 describe("getDaysUntil", () => {
+  it("returns 0 for today regardless of current time of day", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-15T23:30:00"));
+    expect(getDaysUntil("2026-03-15")).toBe(0);
+    expect(getDaysUntil("2026-03-16")).toBe(1);
+    expect(getDaysUntil("2026-03-14")).toBe(-1);
+    vi.useRealTimers();
+  });
+
   it("returns null for falsy input", () => {
     expect(getDaysUntil("")).toBe(null);
     expect(getDaysUntil(null)).toBe(null);

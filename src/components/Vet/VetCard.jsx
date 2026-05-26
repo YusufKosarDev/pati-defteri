@@ -166,9 +166,13 @@ function VetCard({ pet }) {
   // Geriye dönük uyumluluk: eski pet.vet → pet.vets
   const vets = pet.vets || (pet.vet && (pet.vet.clinicName || pet.vet.doctorName || pet.vet.phone) ? [pet.vet] : []);
 
-  const handleDelete = (index) => {
+  const handleDelete = async (index) => {
     const updatedVets = vets.filter((_, i) => i !== index);
-    updatePet(pet.id, { vets: updatedVets });
+    try {
+      await updatePet(pet.id, { vets: updatedVets });
+    } catch {
+      // Hata toast'ı PetContext'te gösterildi.
+    }
     setDeleteIndex(null);
   };
 
@@ -213,7 +217,7 @@ function VetCard({ pet }) {
 
         {vets.map((vet, index) => (
           <SingleVetCard
-            key={index}
+            key={`${vet.clinicName ?? ""}|${vet.doctorName ?? ""}|${vet.phone ?? ""}`}
             vet={vet}
             index={index}
             isEN={isEN}

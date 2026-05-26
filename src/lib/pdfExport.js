@@ -1,12 +1,25 @@
 import jsPDF from "jspdf";
 import { formatDate, calculateAge } from "../utils/dateHelpers";
+import { ROBOTO_REGULAR_B64, ROBOTO_BOLD_B64 } from "./fonts/roboto";
 
-// Bu dosya `jspdf` (+ html2canvas dep'i) dahil eden ağır bir bundle yaratır.
-// ExportButton tarafında `await import("../../lib/pdfExport")` ile lazy load edilir,
-// böylece PetDetailPage ilk yüklemeye ~340 KB dahil etmez.
+// Bu dosya `jspdf` + gömülü Roboto fontunu (~450KB base64) dahil eden ağır bir
+// bundle yaratır. ExportButton tarafında `await import("../../lib/pdfExport")`
+// ile lazy load edilir, böylece PetDetailPage ilk yüklemeye dahil etmez.
+
+// jsPDF varsayılan helvetica fontu WinAnsi kullanır ve Türkçe karakterleri
+// (çğışöü / İ) bozar. Roboto TTF'i gömerek kullanıcı verisini (isim, not, cins)
+// doğru render ederiz.
+function registerFont(doc) {
+  doc.addFileToVFS("Roboto-Regular.ttf", ROBOTO_REGULAR_B64);
+  doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+  doc.addFileToVFS("Roboto-Bold.ttf", ROBOTO_BOLD_B64);
+  doc.addFont("Roboto-Bold.ttf", "Roboto", "bold");
+  doc.setFont("Roboto", "normal");
+}
 
 export async function generatePetPdf({ pet, records, weights, isEN }) {
   const doc = new jsPDF();
+  registerFont(doc);
 
   const sortedRecords = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
   const sortedWeights = [...weights].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -19,18 +32,18 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
 
   const txt = {
     title: "PatiDefteri",
-    subtitle: isEN ? "Pet Care Journal" : "Evcil Hayvan Bakim Gunlugu",
-    created: isEN ? "Created:" : "Olusturma:",
-    type: isEN ? "Type" : "Tur",
+    subtitle: isEN ? "Pet Care Journal" : "Evcil Hayvan Bakım Günlüğü",
+    created: isEN ? "Created:" : "Oluşturma:",
+    type: isEN ? "Type" : "Tür",
     breed: isEN ? "Breed" : "Cins",
-    birth: isEN ? "Birth" : "Dogum",
-    age: isEN ? "Age" : "Yas",
+    birth: isEN ? "Birth" : "Doğum",
+    age: isEN ? "Age" : "Yaş",
     note: isEN ? "Note" : "Not",
-    recordsTitle: isEN ? "Vaccine & Care Records" : "Asi & Bakim Kayitlari",
-    weightsTitle: isEN ? "Weight History" : "Agirlik Gecmisi",
-    noRecords: isEN ? "No records yet." : "Henuz kayit yok.",
-    noWeights: isEN ? "No weight records yet." : "Henuz agirlik kaydi yok.",
-    done: isEN ? "Done" : "Yapildi",
+    recordsTitle: isEN ? "Vaccine & Care Records" : "Aşı & Bakım Kayıtları",
+    weightsTitle: isEN ? "Weight History" : "Ağırlık Geçmişi",
+    noRecords: isEN ? "No records yet." : "Henüz kayıt yok.",
+    noWeights: isEN ? "No weight records yet." : "Henüz ağırlık kaydı yok.",
+    done: isEN ? "Done" : "Yapıldı",
     next: isEN ? "Next" : "Sonraki",
     page: isEN ? "Page" : "Sayfa",
   };
@@ -40,10 +53,10 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
   doc.rect(0, 0, 210, 40, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Roboto", "bold");
   doc.text(txt.title, 14, 18);
   doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Roboto", "normal");
   doc.text(txt.subtitle, 14, 28);
   const today = new Date().toLocaleDateString(isEN ? "en-US" : "tr-TR");
   doc.setFontSize(9);
@@ -55,10 +68,10 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
   doc.roundedRect(10, y - 7, 190, 38, 3, 3, "F");
   doc.setTextColor(...dark);
   doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Roboto", "bold");
   doc.text(`${pet.name}`, 18, y + 2);
   doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Roboto", "normal");
   doc.setTextColor(...gray);
   doc.text(`${txt.type}: ${pet.type}${pet.breed ? `  |  ${txt.breed}: ${pet.breed}` : ""}`, 18, y + 12);
   if (pet.birthDate) doc.text(`${txt.birth}: ${formatDate(pet.birthDate)}  |  ${txt.age}: ${age || "-"}`, 18, y + 21);
@@ -67,7 +80,7 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
 
   // Kayıtlar
   doc.setFontSize(13);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Roboto", "bold");
   doc.setTextColor(...emerald);
   doc.text(txt.recordsTitle, 14, y);
   y += 2;
@@ -79,7 +92,7 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
   if (sortedRecords.length === 0) {
     doc.setFontSize(10);
     doc.setTextColor(...gray);
-    doc.setFont("helvetica", "italic");
+    doc.setFont("Roboto", "normal");
     doc.text(txt.noRecords, 14, y);
     y += 12;
   } else {
@@ -87,8 +100,8 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
     doc.rect(10, y - 5, 190, 9, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text(isEN ? "Type" : "Tur", 14, y);
+    doc.setFont("Roboto", "bold");
+    doc.text(isEN ? "Type" : "Tür", 14, y);
     doc.text(txt.done, 80, y);
     doc.text(txt.next, 130, y);
     y += 7;
@@ -101,7 +114,7 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
       }
       doc.setTextColor(...dark);
       doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Roboto", "normal");
       doc.text(r.type, 14, y);
       doc.text(formatDate(r.date), 80, y);
       doc.text(r.nextDate ? formatDate(r.nextDate) : "-", 130, y);
@@ -109,7 +122,7 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
       if (r.notes) {
         doc.setTextColor(...gray);
         doc.setFontSize(8);
-        doc.setFont("helvetica", "italic");
+        doc.setFont("Roboto", "normal");
         doc.text(`  ${txt.note}: ${r.notes}`, 14, y);
         y += 7;
       }
@@ -121,7 +134,7 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
   // Ağırlık
   if (y > 250) { doc.addPage(); y = 20; }
   doc.setFontSize(13);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Roboto", "bold");
   doc.setTextColor(...emerald);
   doc.text(txt.weightsTitle, 14, y);
   y += 2;
@@ -132,16 +145,16 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
   if (sortedWeights.length === 0) {
     doc.setFontSize(10);
     doc.setTextColor(...gray);
-    doc.setFont("helvetica", "italic");
+    doc.setFont("Roboto", "normal");
     doc.text(txt.noWeights, 14, y);
   } else {
     doc.setFillColor(...emerald);
     doc.rect(10, y - 5, 190, 9, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Roboto", "bold");
     doc.text(isEN ? "Date" : "Tarih", 14, y);
-    doc.text(isEN ? "Weight (kg)" : "Agirlik (kg)", 80, y);
+    doc.text(isEN ? "Weight (kg)" : "Ağırlık (kg)", 80, y);
     doc.text(isEN ? "Note" : "Not", 130, y);
     y += 7;
 
@@ -153,7 +166,7 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
       }
       doc.setTextColor(...dark);
       doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Roboto", "normal");
       doc.text(formatDate(w.date), 14, y);
       doc.text(`${w.weight} kg`, 80, y);
       doc.text(w.notes || "-", 130, y);

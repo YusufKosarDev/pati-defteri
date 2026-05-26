@@ -38,51 +38,104 @@ export function PetProvider({ children }) {
 
   const isEN = () => i18n.language === "en";
 
+  // Convex hata mesajı "...Uncaught Error: <mesaj>\n at..." biçiminde gelir;
+  // anlamlı kısmı çıkarır, bulamazsa genel bir mesaj döner.
+  const friendlyError = (err) => {
+    const raw = typeof err?.message === "string" ? err.message : "";
+    const m = raw.match(/(?:Uncaught\s+)?(?:Convex)?Error:\s*([^\n]+)/i);
+    const msg = m?.[1]?.trim();
+    if (msg) return msg;
+    return isEN() ? "Something went wrong. Please try again." : "İşlem başarısız. Lütfen tekrar deneyin.";
+  };
+
+  // Oluştur/güncelle: hata toast'ı göster + rethrow et (form açık kalsın).
   const addPet = async (pet) => {
-    await createPet(pet);
-    toast.success(isEN() ? `${pet.name} added! 🐾` : `${pet.name} eklendi! 🐾`);
+    try {
+      await createPet(pet);
+      toast.success(isEN() ? `${pet.name} added! 🐾` : `${pet.name} eklendi! 🐾`);
+    } catch (err) {
+      toast.error(friendlyError(err));
+      throw err;
+    }
   };
 
   const updatePet = async (id, updatedPet) => {
-    await updatePetMut({ id, ...updatedPet });
-    toast.success(isEN() ? "Updated! ✅" : "Güncellendi! ✅");
+    try {
+      await updatePetMut({ id, ...updatedPet });
+      toast.success(isEN() ? "Updated! ✅" : "Güncellendi! ✅");
+    } catch (err) {
+      toast.error(friendlyError(err));
+      throw err;
+    }
   };
 
+  // Sil/sırala: hata toast'ı göster, yutma (çağrı noktaları fire-and-forget).
   const deletePet = async (id) => {
     const pet = (pets ?? []).find((p) => p._id === id);
-    await removePet({ id });
-    toast.success(isEN() ? `${pet?.name} deleted.` : `${pet?.name} silindi.`);
+    try {
+      await removePet({ id });
+      toast.success(isEN() ? `${pet?.name} deleted.` : `${pet?.name} silindi.`);
+    } catch (err) {
+      toast.error(friendlyError(err));
+    }
   };
 
   const addRecord = async (record) => {
-    await createRecord(record);
-    toast.success(isEN() ? "Record added! 💉" : "Kayıt eklendi! 💉");
+    try {
+      await createRecord(record);
+      toast.success(isEN() ? "Record added! 💉" : "Kayıt eklendi! 💉");
+    } catch (err) {
+      toast.error(friendlyError(err));
+      throw err;
+    }
   };
 
   const updateRecord = async (id, updatedRecord) => {
-    await updateRecordMut({ id, ...updatedRecord });
-    toast.success(isEN() ? "Record updated! ✅" : "Kayıt güncellendi! ✅");
+    try {
+      await updateRecordMut({ id, ...updatedRecord });
+      toast.success(isEN() ? "Record updated! ✅" : "Kayıt güncellendi! ✅");
+    } catch (err) {
+      toast.error(friendlyError(err));
+      throw err;
+    }
   };
 
   const deleteRecord = async (id) => {
-    await removeRecord({ id });
-    toast.success(isEN() ? "Record deleted." : "Kayıt silindi.");
+    try {
+      await removeRecord({ id });
+      toast.success(isEN() ? "Record deleted." : "Kayıt silindi.");
+    } catch (err) {
+      toast.error(friendlyError(err));
+    }
   };
 
   const reorderRecords = async (orderedIds) => {
-    await reorderRecordsMut({ orderedIds });
+    try {
+      await reorderRecordsMut({ orderedIds });
+    } catch (err) {
+      toast.error(friendlyError(err));
+    }
   };
 
   const addWeight = async (weight) => {
-    await createWeight(weight);
-    toast.success(
-      isEN() ? `${weight.weight} kg saved! ⚖️` : `${weight.weight} kg kaydedildi! ⚖️`
-    );
+    try {
+      await createWeight(weight);
+      toast.success(
+        isEN() ? `${weight.weight} kg saved! ⚖️` : `${weight.weight} kg kaydedildi! ⚖️`
+      );
+    } catch (err) {
+      toast.error(friendlyError(err));
+      throw err;
+    }
   };
 
   const deleteWeight = async (id) => {
-    await removeWeight({ id });
-    toast.success(isEN() ? "Weight record deleted." : "Ağırlık kaydı silindi.");
+    try {
+      await removeWeight({ id });
+      toast.success(isEN() ? "Weight record deleted." : "Ağırlık kaydı silindi.");
+    } catch (err) {
+      toast.error(friendlyError(err));
+    }
   };
 
   // Geriye dönük uyumluluk: tüketiciler `id` ve `photo` field'larını okuyor.

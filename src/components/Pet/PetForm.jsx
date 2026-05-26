@@ -131,17 +131,21 @@ function PetForm({ onClose, existingPet = null }) {
       notes: form.notes || undefined,
     };
 
-    if (existingPet) {
-      await updatePet(existingPet.id, payload);
-    } else {
-      await addPet(payload);
-      if (pets.length === 0) {
-        setTimeout(fireConfetti, 300);
+    try {
+      if (existingPet) {
+        await updatePet(existingPet.id, payload);
       } else {
-        setTimeout(fireStar, 300);
+        await addPet(payload);
+        if (pets.length === 0) {
+          setTimeout(fireConfetti, 300);
+        } else {
+          setTimeout(fireStar, 300);
+        }
       }
+      onClose();
+    } catch {
+      // Hata toast'ı PetContext'te gösterildi; modal açık kalır.
     }
-    onClose();
   };
 
   const inputClass = "w-full border border-gray-700 bg-gray-800 text-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 placeholder-gray-500";

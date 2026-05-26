@@ -29,6 +29,13 @@ function RecordForm({ petId, onClose, existingRecord = null }) {
   const isEN = i18n.language === "en";
   const RECORD_TYPES = isEN ? RECORD_TYPES_EN : RECORD_TYPES_TR;
 
+  // Düzenlenen kayıt diğer dilde kaydedilmişse tipi listede olmayabilir;
+  // değeri kaybetmemek için mevcut tipi seçeneklerin başına ekle.
+  const typeOptions =
+    existingRecord?.type && !RECORD_TYPES.includes(existingRecord.type)
+      ? [existingRecord.type, ...RECORD_TYPES]
+      : RECORD_TYPES;
+
   const [form, setForm] = useState({
     type: existingRecord?.type || RECORD_TYPES[0],
     date: existingRecord?.date || "",
@@ -40,15 +47,19 @@ function RecordForm({ petId, onClose, existingRecord = null }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.date) return;
-    if (existingRecord) {
-      updateRecord(existingRecord.id, form);
-    } else {
-      addRecord({ ...form, petId });
+    try {
+      if (existingRecord) {
+        await updateRecord(existingRecord.id, form);
+      } else {
+        await addRecord({ ...form, petId });
+      }
+      onClose();
+    } catch {
+      // Hata toast'ı PetContext'te gösterildi; modal açık kalır.
     }
-    onClose();
   };
 
   const inputClass = "w-full border border-gray-700 bg-gray-800 text-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400";
@@ -59,7 +70,7 @@ function RecordForm({ petId, onClose, existingRecord = null }) {
       <div>
         <label className={labelClass}>{isEN ? "Record Type" : "Kayıt Türü"}</label>
         <select name="type" value={form.type} onChange={handleChange} className={inputClass}>
-          {RECORD_TYPES.map((t) => <option key={t}>{t}</option>)}
+          {typeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
       </div>
 

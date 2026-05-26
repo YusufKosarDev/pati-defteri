@@ -13,11 +13,15 @@ function WeightForm({ petId, onClose }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.weight || !form.date) return;
-    addWeight({ ...form, petId });
-    onClose();
+    try {
+      await addWeight({ ...form, petId });
+      onClose();
+    } catch {
+      // Hata toast'ı PetContext'te gösterildi; modal açık kalır.
+    }
   };
 
   const inputClass = "w-full border border-gray-700 bg-gray-800 text-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 placeholder-gray-500";
