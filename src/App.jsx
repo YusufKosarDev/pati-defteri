@@ -5,7 +5,7 @@ import { PetProvider } from "./context/PetContext";
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./hooks/useAuth";
 import { usePet } from "./hooks/usePet";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, MotionConfig } from "framer-motion";
 import Navbar from "./components/Layout/Navbar";
 import ScrollToTop from "./components/UI/ScrollToTop";
 import OnboardingWrapper from "./components/UI/Onboarding";
@@ -147,13 +147,17 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <PetProvider>
-          <AppRoutes />
-        </PetProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    // reducedMotion="user" → prefers-reduced-motion açıksa Framer Motion
+    // hareket animasyonlarını otomatik kısar (erişilebilirlik).
+    <MotionConfig reducedMotion="user">
+      <BrowserRouter>
+        <AuthProvider>
+          <PetProvider>
+            <AppRoutes />
+          </PetProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </MotionConfig>
   );
 }
 

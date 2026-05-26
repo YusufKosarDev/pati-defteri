@@ -1,8 +1,13 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
+import useModalA11y from "../../hooks/useModalA11y";
 
 function ConfirmModal({ isOpen, onClose, onConfirm, title, desc, confirmText, confirmVariant = "danger" }) {
   const { t } = useTranslation();
+  const dialogRef = useModalA11y(isOpen, onClose);
+  const titleId = useId();
+  const descId = useId();
 
   const variants = {
     danger: "bg-red-500 hover:bg-red-600 text-white",
@@ -21,18 +26,24 @@ function ConfirmModal({ isOpen, onClose, onConfirm, title, desc, confirmText, co
             onClick={onClose}
           />
           <motion.div
+            ref={dialogRef}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={desc ? descId : undefined}
+            tabIndex={-1}
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: "spring", duration: 0.3 }}
-            className="relative bg-gray-900 border border-gray-800 rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 z-10"
+            className="relative bg-gray-900 border border-gray-800 rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 z-10 focus:outline-none"
           >
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-red-950 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
                 🗑️
               </div>
-              <h2 className="text-lg font-bold text-gray-100 mb-2">{title}</h2>
-              {desc && <p className="text-sm text-gray-500">{desc}</p>}
+              <h2 id={titleId} className="text-lg font-bold text-gray-100 mb-2">{title}</h2>
+              {desc && <p id={descId} className="text-sm text-gray-500">{desc}</p>}
             </div>
 
             <div className="flex gap-3">

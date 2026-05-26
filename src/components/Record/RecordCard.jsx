@@ -27,7 +27,7 @@ const RECORD_ICONS = {
   "Other": { icon: "📋", color: "bg-gray-500/10" },
 };
 
-function RecordCard({ record, index = 0 }) {
+function RecordCard({ record, index = 0, sortable = true }) {
   const { deleteRecord } = usePet();
   const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
@@ -36,7 +36,7 @@ function RecordCard({ record, index = 0 }) {
 
   const {
     attributes, listeners, setNodeRef, transform, transition, isDragging,
-  } = useSortable({ id: record.id });
+  } = useSortable({ id: record.id, disabled: !sortable });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -84,13 +84,16 @@ function RecordCard({ record, index = 0 }) {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span
-              {...attributes}
-              {...listeners}
-              className="text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing text-lg select-none"
-            >
-              ⠿
-            </span>
+            {sortable && (
+              <span
+                {...attributes}
+                {...listeners}
+                className="text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing text-lg select-none"
+                aria-label={isEN ? "Drag to reorder" : "Sıralamak için sürükle"}
+              >
+                ⠿
+              </span>
+            )}
             <div className={`w-9 h-9 ${recordStyle.color} rounded-xl flex items-center justify-center text-lg flex-shrink-0`}>
               {recordStyle.icon}
             </div>

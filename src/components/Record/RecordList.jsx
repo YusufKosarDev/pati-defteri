@@ -8,6 +8,7 @@ import {
 } from "@dnd-kit/sortable";
 import { usePet } from "../../hooks/usePet";
 import { getTypeAliases } from "../../utils/recordTypes";
+import { sortRecordsForDisplay } from "../../utils/sortRecords";
 import RecordCard from "./RecordCard";
 import Modal from "../UI/Modal";
 import RecordForm from "./RecordForm";
@@ -31,9 +32,14 @@ function RecordList({ petId }) {
   const filtered = activeFilter === "all"
     ? allRecords
     : allRecords.filter((r) => getTypeAliases(activeFilter).includes(r.type));
-  const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sorted = sortRecordsForDisplay(filtered);
+
+  // Sürükle-bırak yalnızca filtresiz ("Tümü") görünümde — bir alt küme yeniden
+  // sıralanırsa global `order` tutarsız olurdu.
+  const dragEnabled = activeFilter === "all";
 
   const handleDragEnd = async (event) => {
+    if (!dragEnabled) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIndex = sorted.findIndex((r) => r.id === active.id);
@@ -82,7 +88,7 @@ function RecordList({ petId }) {
           <SortableContext items={sorted.map((r) => r.id)} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-3">
               {sorted.map((record, index) => (
-                <RecordCard key={record.id} record={record} index={index} />
+                <RecordCard key={record.id} record={record} index={index} sortable={dragEnabled} />
               ))}
             </div>
           </SortableContext>
