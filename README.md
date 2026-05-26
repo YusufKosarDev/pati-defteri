@@ -87,6 +87,7 @@
 - Responsive tasarım (mobil uyumlu)
 - PWA — telefona uygulama olarak kurulabilir
 - Onboarding ve konfeti animasyonu
+- **Erişilebilirlik:** dialog `role`/`aria` + focus-trap, klavye desteği (Esc/Tab/Enter), `prefers-reduced-motion` ile hareket kısma
 
 ---
 
@@ -148,8 +149,9 @@
 |-------|----------|
 | TypeScript | Tip güvenliği (strict mode, allowJs ile aşamalı geçiş) |
 | Vitest + jsdom | Client unit testler |
-| convex-test + edge-runtime | Convex backend entegrasyon testleri (auth + ownership) |
-| Playwright | Otomatik ekran görüntüsü |
+| React Testing Library | Komponent testleri (render + etkileşim + a11y) |
+| convex-test + edge-runtime | Convex backend entegrasyon testleri (auth + ownership + veri silme/taşıma) |
+| Playwright | E2E smoke testleri + otomatik ekran görüntüsü |
 | GitHub Actions | CI (lint · typecheck · test · build) |
 | ESLint + react/react-hooks | Statik analiz, anti-pattern yakalama |
 | husky + lint-staged | Pre-commit hook (lint + typecheck + test) |
@@ -201,6 +203,7 @@ npm run lint         # ESLint (0 hata politikası)
 npm run typecheck    # tsc --noEmit (strict mode)
 npm run test         # Vitest — client (jsdom) + convex (edge-runtime) projeleri
 npm run test:watch   # İzleme modu
+npm run e2e          # Playwright E2E smoke testleri (Vite'ı otomatik başlatır)
 npm run build        # Üretim derlemesi
 npm run screenshots  # README ekran görüntülerini yeniden üret (Playwright)
 ```
@@ -214,8 +217,10 @@ npm run screenshots  # README ekran görüntülerini yeniden üret (Playwright)
 ### Test mimarisi
 
 Vitest iki proje config'i kullanır:
-- **`client`** projesi (`jsdom` env) — React komponent ve util testleri.
-- **`convex`** projesi (`edge-runtime` env) — `convex-test` ile gerçek mutation/query'ler, auth + ownership davranışı sabit testlerle korunur.
+- **`client`** projesi (`jsdom` env) — util testleri + React Testing Library ile komponent testleri (Modal/ConfirmModal a11y davranışı, AuthPage form doğrulaması).
+- **`convex`** projesi (`edge-runtime` env) — `convex-test` ile gerçek mutation/query'ler; auth, ownership ve hesap silme/veri taşıma davranışı sabit testlerle korunur.
+
+Ayrıca **Playwright E2E** (`e2e/`) — routing, lazy-load ve temel akışları gerçek tarayıcıda (chromium) doğrular; `npm run e2e` ile çalışır.
 
 ---
 
@@ -261,7 +266,6 @@ Aktif geliştirilen / planlanan özellikler:
 - [ ] **iCal / Google Calendar sync** — hatırlatıcıları takvim uygulamasına ekle
 - [ ] **Aşı protokol şablonları** — yaşa/türe göre veteriner-önerili otomatik program
 - [ ] **Sentry + custom analytics dashboard** — hangi feature'ın ne kadar kullanıldığı
-- [ ] **Modal focus trap** — tam WCAG AA uyumu için (şu an a11y skoru 87)
 - [ ] **Apple Health / Google Fit ağırlık entegrasyonu**
 - [ ] **Hayvan medikal geçmiş zaman çizelgesi** — kronolojik tek görünüm
 

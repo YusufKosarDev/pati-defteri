@@ -32,5 +32,11 @@ dist-ssr
 lh-*.json
 psi-*.json
 
+# Playwright E2E çıktıları
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Kişisel notlar / yayın taslakları — repo dışı kalır
 docs/LINKEDIN_POST.md

@@ -47,4 +47,11 @@ export default defineConfig([
       globals: { ...globals.serviceworker },
     },
   },
+  {
+    // Node bağlamında çalışan config/test dosyaları
+    files: ['playwright.config.js', 'e2e/**/*.js', '*.config.js'],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+  },
 ])

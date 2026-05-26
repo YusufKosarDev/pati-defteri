@@ -10,6 +10,7 @@ export default defineConfig({
           name: "client",
           environment: "jsdom",
           include: ["src/**/*.test.{js,jsx,ts,tsx}"],
+          setupFiles: ["./vitest.setup.js"],
         },
       },
       {
