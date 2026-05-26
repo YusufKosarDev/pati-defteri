@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
+import { checkRateLimit } from "./rateLimit";
 
 async function requireUser(ctx: QueryCtx | MutationCtx) {
   const userId = await getAuthUserId(ctx);
@@ -49,6 +50,8 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await requireOwnedPet(ctx, args.petId);
+    // Bot abuse'a karşı: kullanıcı başına dakikada max 60 kayıt
+    await checkRateLimit(ctx, userId, "records.create", 60, 60_000);
     return await ctx.db.insert("records", { ...args, userId });
   },
 });

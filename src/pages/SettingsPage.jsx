@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "convex/react";
 import { usePet } from "../hooks/usePet";
@@ -9,6 +10,7 @@ import usePageTitle from "../hooks/usePageTitle";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { api } from "../../convex/_generated/api";
+import ConfirmModal from "../components/UI/ConfirmModal";
 
 function Section({ title, children, delay = 0 }) {
   return (
@@ -41,11 +43,12 @@ function Row({ icon, label, desc, children }) {
 
 function SettingsPage() {
   const { pets, records, weights, language, setLanguage } = usePet();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, changePassword, deleteAccount, upgradeGuest } = useAuth();
   const replaceAll = useMutation(api.backup.replaceAll);
+  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { permission, requestPermission, sendTest, isSupported, isConfigured, isReady } = useNotifications();
-  const { sendReminderEmail, hasReminders } = useEmailReminder(pets, records);
+  const { sendReminderEmail, hasReminders } = useEmailReminder(records);
   const isEN = i18n.language === "en";
 
   usePageTitle(isEN ? "Settings" : "Ayarlar");
@@ -53,7 +56,88 @@ function SettingsPage() {
   const [dragOver, setDragOver] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(user?.name || "");
-  const [emailInput, setEmailInput] = useState(user?.email || "");
+  const [sendingEmail, setSendingEmail] = useState(false);
+
+  // Şifre değiştirme
+  const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
+  const [pwBusy, setPwBusy] = useState(false);
+
+  // Misafir → hesap yükseltme
+  const [upgradeForm, setUpgradeForm] = useState({ name: user?.name || "", email: "", password: "" });
+  const [upgradeBusy, setUpgradeBusy] = useState(false);
+
+  // Hesap silme
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (!pwForm.current || !pwForm.next) {
+      toast.error(isEN ? "Fill in all fields." : "Tüm alanları doldurun.");
+      return;
+    }
+    if (pwForm.next.length < 6) {
+      toast.error(isEN ? "New password must be at least 6 characters." : "Yeni şifre en az 6 karakter olmalı.");
+      return;
+    }
+    if (pwForm.next !== pwForm.confirm) {
+      toast.error(isEN ? "Passwords don't match." : "Şifreler eşleşmiyor.");
+      return;
+    }
+    setPwBusy(true);
+    try {
+      const res = await changePassword(pwForm.current, pwForm.next);
+      if (res.success) {
+        toast.success(isEN ? "Password changed!" : "Şifre değiştirildi!");
+        setPwForm({ current: "", next: "", confirm: "" });
+      } else {
+        toast.error(res.error);
+      }
+    } finally {
+      setPwBusy(false);
+    }
+  };
+
+  const handleUpgrade = async () => {
+    if (!upgradeForm.name.trim() || !upgradeForm.email.trim() || !upgradeForm.password) {
+      toast.error(isEN ? "Fill in all fields." : "Tüm alanları doldurun.");
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(upgradeForm.email)) {
+      toast.error(isEN ? "Enter a valid email." : "Geçerli bir e-posta girin.");
+      return;
+    }
+    if (upgradeForm.password.length < 6) {
+      toast.error(isEN ? "Password must be at least 6 characters." : "Şifre en az 6 karakter olmalı.");
+      return;
+    }
+    setUpgradeBusy(true);
+    try {
+      const res = await upgradeGuest(upgradeForm.name, upgradeForm.email, upgradeForm.password);
+      if (res.success) {
+        toast.success(isEN ? "Account created — your data is saved! 🎉" : "Hesap oluşturuldu — verileriniz korundu! 🎉");
+      } else {
+        toast.error(res.error);
+      }
+    } finally {
+      setUpgradeBusy(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteBusy(true);
+    try {
+      const res = await deleteAccount();
+      if (res.success) {
+        toast.success(isEN ? "Account deleted." : "Hesap silindi.");
+        navigate("/");
+      } else {
+        toast.error(res.error);
+      }
+    } finally {
+      setDeleteBusy(false);
+      setDeleteConfirm(false);
+    }
+  };
 
   const handleNotificationToggle = async () => {
     if (!isSupported) {
@@ -96,19 +180,16 @@ function SettingsPage() {
   };
 
   const handleSendReminderEmail = async () => {
-    if (!emailInput.trim()) {
-      toast.error(isEN ? "Please enter an email address." : "E-posta adresi girin.");
-      return;
-    }
-    if (!/\S+@\S+\.\S+/.test(emailInput)) {
-      toast.error(isEN ? "Invalid email address." : "Geçersiz e-posta adresi.");
-      return;
-    }
-    const result = await sendReminderEmail(emailInput, user?.name);
-    if (result.success) {
-      toast.success(isEN ? "Reminder email sent! 📧" : "Hatırlatıcı email gönderildi! 📧");
-    } else {
-      toast.error(result.error);
+    setSendingEmail(true);
+    try {
+      const result = await sendReminderEmail();
+      if (result.success) {
+        toast.success(isEN ? "Reminder email sent! 📧" : "Hatırlatıcı email gönderildi! 📧");
+      } else {
+        toast.error(result.error);
+      }
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -234,12 +315,79 @@ function SettingsPage() {
             </div>
 
             {user.isGuest && (
-              <div className="mt-3 p-3 bg-yellow-950/30 border border-yellow-900 rounded-xl">
-                <p className="text-xs text-yellow-400">
+              <div className="mt-3 p-4 bg-yellow-950/30 border border-yellow-900 rounded-xl">
+                <p className="text-xs text-yellow-400 mb-3">
                   ⚠️ {isEN
-                    ? "You're using as a guest. Account upgrade will be available soon."
-                    : "Misafir olarak kullanıyorsunuz. Hesaba yükseltme yakında eklenecek."}
+                    ? "You're a guest. Create an account to keep your data permanently and access it from any device — your current pets and records will be transferred."
+                    : "Misafir kullanıyorsunuz. Verilerinizi kalıcı tutmak ve her cihazdan erişmek için hesap oluşturun — mevcut hayvan ve kayıtlarınız taşınır."}
                 </p>
+                <div className="flex flex-col gap-2">
+                  <input
+                    value={upgradeForm.name}
+                    onChange={(e) => setUpgradeForm({ ...upgradeForm, name: e.target.value })}
+                    placeholder={isEN ? "Name" : "İsim"}
+                    className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                  <input
+                    type="email"
+                    value={upgradeForm.email}
+                    onChange={(e) => setUpgradeForm({ ...upgradeForm, email: e.target.value })}
+                    placeholder={isEN ? "Email" : "E-posta"}
+                    className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                  <input
+                    type="password"
+                    value={upgradeForm.password}
+                    onChange={(e) => setUpgradeForm({ ...upgradeForm, password: e.target.value })}
+                    placeholder={isEN ? "Password (min 6 chars)" : "Şifre (en az 6 karakter)"}
+                    className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                  <button
+                    onClick={handleUpgrade}
+                    disabled={upgradeBusy}
+                    className="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors"
+                  >
+                    {upgradeBusy ? (isEN ? "Creating..." : "Oluşturuluyor...") : (isEN ? "⬆️ Upgrade to Account" : "⬆️ Hesaba Yükselt")}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!user.isGuest && (
+              <div className="mt-4 pt-4 border-t border-gray-800">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  {isEN ? "Change Password" : "Şifre Değiştir"}
+                </p>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="password"
+                    value={pwForm.current}
+                    onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })}
+                    placeholder={isEN ? "Current password" : "Mevcut şifre"}
+                    className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                  <input
+                    type="password"
+                    value={pwForm.next}
+                    onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })}
+                    placeholder={isEN ? "New password (min 6 chars)" : "Yeni şifre (en az 6 karakter)"}
+                    className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                  <input
+                    type="password"
+                    value={pwForm.confirm}
+                    onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
+                    placeholder={isEN ? "Confirm new password" : "Yeni şifre tekrar"}
+                    className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                  <button
+                    onClick={handleChangePassword}
+                    disabled={pwBusy}
+                    className="self-start bg-gray-800 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed text-gray-200 px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors border border-gray-700"
+                  >
+                    {pwBusy ? (isEN ? "Saving..." : "Kaydediliyor...") : (isEN ? "🔒 Change Password" : "🔒 Şifreyi Değiştir")}
+                  </button>
+                </div>
               </div>
             )}
           </Section>
@@ -293,32 +441,40 @@ function SettingsPage() {
           <div className="py-2">
             <p className="text-sm text-gray-400 mb-4">
               {isEN
-                ? "Send yourself a reminder email for upcoming and overdue care."
-                : "Yaklaşan ve gecikmiş bakımlar için kendinize hatırlatıcı email gönderin."}
+                ? "Send a reminder email to your account address for upcoming and overdue care."
+                : "Yaklaşan ve gecikmiş bakımlar için hesap e-posta adresinize hatırlatıcı gönderin."}
             </p>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-                placeholder={isEN ? "your@email.com" : "ornek@email.com"}
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              />
-              <button
-                onClick={handleSendReminderEmail}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors flex items-center gap-2 flex-shrink-0"
-              >
-                📧 {isEN ? "Send" : "Gönder"}
-              </button>
-            </div>
-            {hasReminders() ? (
-              <p className="text-xs text-emerald-400 mt-2">
-                ✅ {isEN ? "You have upcoming/overdue reminders to send." : "Gönderilecek yaklaşan/gecikmiş hatırlatıcılarınız var."}
-              </p>
+            {user?.email ? (
+              <>
+                <div className="flex items-center justify-between gap-3 bg-gray-800 rounded-xl px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-500">{isEN ? "Will be sent to" : "Gönderilecek adres"}</p>
+                    <p className="text-sm text-gray-100 truncate">{user.email}</p>
+                  </div>
+                  <button
+                    onClick={handleSendReminderEmail}
+                    disabled={sendingEmail || !hasReminders()}
+                    className="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors flex items-center gap-2 flex-shrink-0"
+                  >
+                    📧 {sendingEmail ? (isEN ? "Sending..." : "Gönderiliyor...") : (isEN ? "Send" : "Gönder")}
+                  </button>
+                </div>
+                {hasReminders() ? (
+                  <p className="text-xs text-emerald-400 mt-2">
+                    ✅ {isEN ? "You have upcoming/overdue reminders to send." : "Gönderilecek yaklaşan/gecikmiş hatırlatıcılarınız var."}
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-600 mt-2">
+                    {isEN ? "No upcoming or overdue care at the moment." : "Şu an yaklaşan veya gecikmiş bakım yok."}
+                  </p>
+                )}
+              </>
             ) : (
-              <p className="text-xs text-gray-600 mt-2">
-                {isEN ? "No upcoming or overdue care at the moment." : "Şu an yaklaşan veya gecikmiş bakım yok."}
-              </p>
+              <div className="p-3 bg-yellow-950/30 border border-yellow-900 rounded-xl text-xs text-yellow-400">
+                ⚠️ {isEN
+                  ? "Email reminders require a registered account with an email address."
+                  : "E-posta hatırlatıcısı için e-posta adresli kayıtlı bir hesap gerekir."}
+              </div>
             )}
           </div>
         </Section>
@@ -376,7 +532,49 @@ function SettingsPage() {
           </Row>
         </Section>
 
+        {/* Tehlikeli Bölge — Hesap Silme */}
+        {user && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="bg-gray-900 rounded-2xl border border-red-900/50 p-6 mb-4"
+          >
+            <h3 className="text-xs font-bold text-red-400 uppercase tracking-wider mb-4">
+              {isEN ? "Danger Zone" : "Tehlikeli Bölge"}
+            </h3>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="font-medium text-gray-100 text-sm">{isEN ? "Delete Account" : "Hesabı Sil"}</div>
+                <div className="text-xs text-gray-500">
+                  {isEN
+                    ? "Permanently deletes your account and all data. This cannot be undone."
+                    : "Hesabınızı ve tüm verilerinizi kalıcı olarak siler. Geri alınamaz."}
+                </div>
+              </div>
+              <button
+                onClick={() => setDeleteConfirm(true)}
+                disabled={deleteBusy}
+                className="bg-red-950 hover:bg-red-900 disabled:opacity-40 disabled:cursor-not-allowed text-red-400 border border-red-900 px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors flex-shrink-0"
+              >
+                🗑️ {isEN ? "Delete" : "Sil"}
+              </button>
+            </div>
+          </motion.div>
+        )}
+
       </div>
+
+      <ConfirmModal
+        isOpen={deleteConfirm}
+        onClose={() => setDeleteConfirm(false)}
+        onConfirm={handleDeleteAccount}
+        title={isEN ? "Delete account?" : "Hesabı sil?"}
+        desc={isEN
+          ? "Your account and ALL pets, records and weights will be permanently deleted. This cannot be undone."
+          : "Hesabınız ve TÜM hayvan, kayıt ve ağırlık verileriniz kalıcı olarak silinecek. Bu işlem geri alınamaz."}
+        confirmText={isEN ? "Delete Account" : "Hesabı Sil"}
+      />
     </div>
   );
 }
