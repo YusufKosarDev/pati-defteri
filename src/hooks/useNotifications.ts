@@ -1,23 +1,25 @@
 import { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { captureException } from "../lib/sentry";
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
-function urlBase64ToUint8Array(base64String) {
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const raw = atob(base64);
-  const output = new Uint8Array(raw.length);
+  // ArrayBuffer üzerinde kur ki tip BufferSource (applicationServerKey) ile uyumlu olsun.
+  const output = new Uint8Array(new ArrayBuffer(raw.length));
   for (let i = 0; i < raw.length; ++i) output[i] = raw.charCodeAt(i);
   return output;
 }
 
-function subscriptionToJSON(sub) {
+function subscriptionToJSON(sub: PushSubscription) {
   const json = sub.toJSON();
   return {
-    endpoint: json.endpoint,
-    keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+    endpoint: json.endpoint ?? "",
+    keys: { p256dh: json.keys?.p256dh ?? "", auth: json.keys?.auth ?? "" },
   };
 }
 
@@ -28,7 +30,7 @@ function useNotifications() {
     "serviceWorker" in navigator &&
     "PushManager" in window;
 
-  const [permission, setPermission] = useState(
+  const [permission, setPermission] = useState<NotificationPermission>(
     isSupported ? Notification.permission : "denied"
   );
 
@@ -50,7 +52,7 @@ function useNotifications() {
     return sub;
   }
 
-  const requestPermission = async () => {
+  const requestPermission = async (): Promise<NotificationPermission> => {
     if (!isSupported) return "denied";
     try {
       const result = await Notification.requestPermission();
@@ -60,7 +62,7 @@ function useNotifications() {
       }
       return result;
     } catch (err) {
-      console.error("Bildirim izni alınamadı:", err);
+      captureException(err, { context: "Notification.requestPermission" });
       return "denied";
     }
   };

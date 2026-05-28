@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
-function usePageTitle(title) {
+function usePageTitle(title?: string | null) {
   const { i18n } = useTranslation();
   const isEN = i18n.language === "en";
   const appName = "PatiDefteri";

@@ -8,8 +8,8 @@ const FOCUSABLE =
  * arka plan scroll kilidi ve kapanışta odağı açan öğeye geri verme.
  * Döndürdüğü ref'i diyalog kapsayıcısına bağla (tabIndex={-1} ile birlikte).
  */
-export default function useModalA11y(isOpen, onClose) {
-  const ref = useRef(null);
+export default function useModalA11y(isOpen: boolean, onClose: () => void) {
+  const ref = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
 
   // onClose'u ref'te güncel tut (render sırasında değil, effect içinde).
@@ -26,17 +26,17 @@ export default function useModalA11y(isOpen, onClose) {
     document.body.style.overflow = "hidden";
 
     // İlk odaklanabilir öğeye (yoksa kapsayıcıya) odaklan.
-    const focusables = node?.querySelectorAll(FOCUSABLE);
+    const focusables = node?.querySelectorAll<HTMLElement>(FOCUSABLE);
     const firstTarget = focusables && focusables.length > 0 ? focusables[0] : node;
     firstTarget?.focus?.();
 
-    const onKeyDown = (e) => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onCloseRef.current?.();
         return;
       }
       if (e.key !== "Tab" || !node) return;
-      const items = node.querySelectorAll(FOCUSABLE);
+      const items = node.querySelectorAll<HTMLElement>(FOCUSABLE);
       if (items.length === 0) {
         e.preventDefault();
         return;

@@ -4,9 +4,9 @@ import confetti from "canvas-confetti";
 function useConfetti() {
   const fireConfetti = useCallback(() => {
     const count = 200;
-    const defaults = { origin: { y: 0.7 } };
+    const defaults: confetti.Options = { origin: { y: 0.7 } };
 
-    function fire(particleRatio, opts) {
+    function fire(particleRatio: number, opts: confetti.Options) {
       confetti({
         ...defaults,
         ...opts,
@@ -22,7 +22,7 @@ function useConfetti() {
   }, []);
 
   const fireStar = useCallback(() => {
-    const defaults = {
+    const defaults: confetti.Options = {
       spread: 360,
       ticks: 60,
       gravity: 0,

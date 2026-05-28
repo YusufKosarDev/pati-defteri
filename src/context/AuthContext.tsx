@@ -1,18 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useAction, useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../convex/_generated/api";
 import { AuthContext } from "../hooks/useAuth";
 import { identifyUser } from "../lib/sentry";
+import { friendlyError } from "../lib/friendlyError";
+import type { ActionResult, AuthUser } from "../types";
 
-// Convex hata mesajı "...Uncaught Error: <mesaj>\n at..." biçiminde gelir.
-function friendlyError(err, fallback) {
-  const raw = typeof err?.message === "string" ? err.message : "";
-  const m = raw.match(/(?:Uncaught\s+)?(?:Convex)?Error:\s*([^\n]+)/i);
-  return m?.[1]?.trim() || fallback;
-}
-
-export function AuthProvider({ children }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const { signIn, signOut } = useAuthActions();
   const viewer = useQuery(api.users.viewer);
@@ -21,7 +16,7 @@ export function AuthProvider({ children }) {
   const deleteAccountAction = useAction(api.account.deleteAccount);
   const upgradeGuestAction = useAction(api.account.upgradeGuest);
 
-  const user = viewer
+  const user: AuthUser | null = viewer
     ? {
         id: viewer._id,
         name: viewer.name ?? (viewer.isAnonymous ? "Misafir" : viewer.email ?? "Kullanıcı"),
@@ -42,12 +37,12 @@ export function AuthProvider({ children }) {
   // birkaç kalıbı kontrol ederiz; sürüm/dil değişimlerine daha dayanıklıdır.
   const EMAIL_TAKEN = /already exists|already registered|already in use|account .*exists/i;
 
-  const register = async (name, email, password) => {
+  const register = async (name: string, email: string, password: string): Promise<ActionResult> => {
     try {
       await signIn("password", { email, password, name, flow: "signUp" });
       return { success: true };
     } catch (err) {
-      const msg = typeof err?.message === "string" ? err.message : "";
+      const msg = err instanceof Error ? err.message : "";
       if (EMAIL_TAKEN.test(msg)) {
         return { success: false, error: "Bu e-posta zaten kayıtlı." };
       }
@@ -55,7 +50,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (email: string, password: string): Promise<ActionResult> => {
     try {
       await signIn("password", { email, password, flow: "signIn" });
       return { success: true };
@@ -64,7 +59,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const loginAsGuest = async () => {
+  const loginAsGuest = async (): Promise<ActionResult> => {
     try {
       await signIn("anonymous");
       return { success: true };
@@ -77,12 +72,15 @@ export function AuthProvider({ children }) {
     await signOut();
   };
 
-  const updateProfile = async (name) => {
+  const updateProfile = async (name: string) => {
     if (!user) return;
     await updateNameMutation({ name });
   };
 
-  const changePassword = async (currentPassword, newPassword) => {
+  const changePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<ActionResult> => {
     try {
       await changePasswordAction({ currentPassword, newPassword });
       return { success: true };
@@ -91,7 +89,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const deleteAccount = async () => {
+  const deleteAccount = async (): Promise<ActionResult> => {
     try {
       await deleteAccountAction({});
       // Oturum sunucuda geçersiz kılındı; istemci token'ını da temizle.
@@ -102,7 +100,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const upgradeGuest = async (name, email, password) => {
+  const upgradeGuest = async (
+    name: string,
+    email: string,
+    password: string
+  ): Promise<ActionResult> => {
     try {
       await upgradeGuestAction({ name, email, password });
       // Eski misafir oturumu geçersiz kılındı; yeni hesapla yeniden giriş yap.

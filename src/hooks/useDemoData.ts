@@ -2,23 +2,23 @@ import { useMutation } from "convex/react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 
-function daysFromNow(offset) {
+function daysFromNow(offset: number): string {
   const d = new Date();
   d.setDate(d.getDate() + offset);
   return d.toISOString().slice(0, 10);
 }
 
-function yearsAgo(years, monthOffset = 0) {
+function yearsAgo(years: number, monthOffset = 0): string {
   const d = new Date();
   d.setFullYear(d.getFullYear() - years);
   d.setMonth(d.getMonth() + monthOffset);
   return d.toISOString().slice(0, 10);
 }
 
-export function buildDemoData(isEN) {
+export function buildDemoData(isEN: boolean) {
   const pamukName = isEN ? "Snowball" : "Pamuk";
   const karamelName = isEN ? "Caramel" : "Karamel";
-  const petType = (en, tr) => (isEN ? en : tr);
+  const petType = (en: string, tr: string) => (isEN ? en : tr);
 
   return {
     pets: [

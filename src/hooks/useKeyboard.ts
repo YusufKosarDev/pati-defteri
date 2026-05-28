@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 
-function useKeyboard(handlers) {
+type KeyHandlers = Record<string, (e: KeyboardEvent) => void>;
+
+function useKeyboard(handlers: KeyHandlers) {
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       // Input veya textarea odaklanmışsa kısayolları çalıştırma
-      const tag = document.activeElement?.tagName?.toLowerCase();
+      const tag = (document.activeElement as HTMLElement | null)?.tagName?.toLowerCase();
       const isTyping = tag === "input" || tag === "textarea" || tag === "select";
 
       Object.entries(handlers).forEach(([key, handler]) => {
