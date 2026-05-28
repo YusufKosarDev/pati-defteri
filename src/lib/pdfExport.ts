@@ -1,6 +1,9 @@
 import jsPDF from "jspdf";
 import { formatDate, calculateAge } from "../utils/dateHelpers";
 import { ROBOTO_REGULAR_B64, ROBOTO_BOLD_B64 } from "./fonts/roboto";
+import { petTypeLabel } from "../utils/petType";
+import { recordTypeLabel } from "../utils/recordTypes";
+import type { Pet, PetRecord, Weight } from "../types";
 
 // Bu dosya `jspdf` + gömülü Roboto fontunu (~450KB base64) dahil eden ağır bir
 // bundle yaratır. ExportButton tarafında `await import("../../lib/pdfExport")`
@@ -9,7 +12,7 @@ import { ROBOTO_REGULAR_B64, ROBOTO_BOLD_B64 } from "./fonts/roboto";
 // jsPDF varsayılan helvetica fontu WinAnsi kullanır ve Türkçe karakterleri
 // (çğışöü / İ) bozar. Roboto TTF'i gömerek kullanıcı verisini (isim, not, cins)
 // doğru render ederiz.
-function registerFont(doc) {
+function registerFont(doc: jsPDF) {
   doc.addFileToVFS("Roboto-Regular.ttf", ROBOTO_REGULAR_B64);
   doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
   doc.addFileToVFS("Roboto-Bold.ttf", ROBOTO_BOLD_B64);
@@ -17,18 +20,34 @@ function registerFont(doc) {
   doc.setFont("Roboto", "normal");
 }
 
-export async function generatePetPdf({ pet, records, weights, isEN }) {
+type RGB = [number, number, number];
+
+export async function generatePetPdf({
+  pet,
+  records,
+  weights,
+  isEN,
+}: {
+  pet: Pet;
+  records: PetRecord[];
+  weights: Weight[];
+  isEN: boolean;
+}) {
   const doc = new jsPDF();
   registerFont(doc);
 
-  const sortedRecords = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
-  const sortedWeights = [...weights].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sortedRecords = [...records].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  const sortedWeights = [...weights].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
   const age = calculateAge(pet.birthDate);
 
-  const emerald = [16, 185, 129];
-  const gray = [107, 114, 128];
-  const dark = [31, 41, 55];
-  const lightGray = [243, 244, 246];
+  const emerald: RGB = [16, 185, 129];
+  const gray: RGB = [107, 114, 128];
+  const dark: RGB = [31, 41, 55];
+  const lightGray: RGB = [243, 244, 246];
 
   const txt = {
     title: "PatiDefteri",
@@ -73,7 +92,7 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
   doc.setFontSize(10);
   doc.setFont("Roboto", "normal");
   doc.setTextColor(...gray);
-  doc.text(`${txt.type}: ${pet.type}${pet.breed ? `  |  ${txt.breed}: ${pet.breed}` : ""}`, 18, y + 12);
+  doc.text(`${txt.type}: ${petTypeLabel(pet.type, isEN)}${pet.breed ? `  |  ${txt.breed}: ${pet.breed}` : ""}`, 18, y + 12);
   if (pet.birthDate) doc.text(`${txt.birth}: ${formatDate(pet.birthDate)}  |  ${txt.age}: ${age || "-"}`, 18, y + 21);
   if (pet.notes) doc.text(`${txt.note}: ${pet.notes}`, 18, y + 30);
   y += 48;
@@ -115,7 +134,7 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
       doc.setTextColor(...dark);
       doc.setFontSize(9);
       doc.setFont("Roboto", "normal");
-      doc.text(r.type, 14, y);
+      doc.text(recordTypeLabel(r.type, isEN), 14, y);
       doc.text(formatDate(r.date), 80, y);
       doc.text(r.nextDate ? formatDate(r.nextDate) : "-", 130, y);
       y += 9;
@@ -175,7 +194,7 @@ export async function generatePetPdf({ pet, records, weights, isEN }) {
   }
 
   // Footer
-  const pageCount = doc.internal.getNumberOfPages();
+  const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFillColor(...lightGray);
