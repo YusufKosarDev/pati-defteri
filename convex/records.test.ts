@@ -69,6 +69,24 @@ describe("records mutations", () => {
     expect(bobUntouched?.order).toBe(0); // değişmedi
   });
 
+  it("reorder aşırı uzun diziyi reddeder (abuse koruması)", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await t.run((ctx) => ctx.db.insert("users", { name: "Alice" }));
+    const petId = await t.run((ctx) =>
+      ctx.db.insert("pets", { userId, name: "Mırnav", type: "Kedi" })
+    );
+    const recId = await t.run((ctx) =>
+      ctx.db.insert("records", { userId, petId, type: "Karma Aşı", date: "2026-01-01" })
+    );
+
+    // Geçerli formatlı id'yi 1001 kez tekrarla → yalnızca uzunluk tavanı tetiklensin
+    const tooMany = Array.from({ length: 1001 }, () => recId);
+
+    await expect(
+      t.withIdentity({ subject: userId }).mutation(api.records.reorder, { orderedIds: tooMany })
+    ).rejects.toThrow(/Çok fazla/);
+  });
+
   it("başkasının record'unu silemez", async () => {
     const t = convexTest(schema, modules);
     const aliceId = await t.run((ctx) => ctx.db.insert("users", { name: "Alice" }));

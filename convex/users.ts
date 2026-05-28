@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query } from "./_generated/server";
+import { assertTextLimits } from "./validators";
 
 export const viewer = query({
   args: {},
@@ -23,6 +24,7 @@ export const updateName = mutation({
   handler: async (ctx, { name }) => {
     const userId = await getAuthUserId(ctx);
     if (userId === null) throw new Error("Oturum açık değil.");
+    assertTextLimits({ name });
     await ctx.db.patch(userId, { name });
   },
 });

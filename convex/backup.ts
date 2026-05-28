@@ -1,15 +1,9 @@
 import { v } from "convex/values";
-import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { mutation } from "./_generated/server";
 import { checkRateLimit } from "./rateLimit";
-
-const vetArg = v.object({
-  clinicName: v.optional(v.string()),
-  doctorName: v.optional(v.string()),
-  phone: v.optional(v.string()),
-  address: v.optional(v.string()),
-  notes: v.optional(v.string()),
-});
+import { assertTextLimits, assertVetLimits } from "./validators";
+import { requireUser } from "./lib/auth";
+import { vetObject as vetArg } from "./lib/vetArg";
 
 const petArg = v.object({
   name: v.string(),
@@ -37,12 +31,6 @@ const weightArg = v.object({
   notes: v.optional(v.string()),
 });
 
-async function requireUser(ctx: QueryCtx | MutationCtx) {
-  const userId = await getAuthUserId(ctx);
-  if (!userId) throw new Error("Oturum açık değil.");
-  return userId;
-}
-
 /**
  * Bir kullanıcının tüm verisini tek seferde içe aktarır. Demo loader ve
  * JSON yedek dosyalarından import için kullanılır.
@@ -58,6 +46,13 @@ export const replaceAll = mutation({
   },
   handler: async (ctx, { pets, records, weights }) => {
     const userId = await requireUser(ctx);
+    // İçe aktarılan her öğenin metin alanlarını doğrula (devasa string reddedilir)
+    for (const p of pets) {
+      assertTextLimits(p);
+      assertVetLimits(p.vets);
+    }
+    for (const r of records) assertTextLimits(r);
+    for (const w of weights) assertTextLimits(w);
     // Demo loader bot abuse'a karşı: dakikada max 5 toplu içe aktarma
     await checkRateLimit(ctx, userId, "backup.replaceAll", 5, 60_000);
 

@@ -1,31 +1,11 @@
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
-import type { Doc, Id } from "./_generated/dataModel";
+import { mutation, query, type QueryCtx } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 import { checkRateLimit } from "./rateLimit";
-
-const vetArg = v.object({
-  clinicName: v.optional(v.string()),
-  doctorName: v.optional(v.string()),
-  phone: v.optional(v.string()),
-  address: v.optional(v.string()),
-  notes: v.optional(v.string()),
-});
-
-async function requireUser(ctx: QueryCtx | MutationCtx) {
-  const userId = await getAuthUserId(ctx);
-  if (!userId) throw new Error("Oturum açık değil.");
-  return userId;
-}
-
-async function requireOwnedPet(ctx: MutationCtx, petId: Id<"pets">) {
-  const userId = await requireUser(ctx);
-  const pet = await ctx.db.get(petId);
-  if (!pet || pet.userId !== userId) {
-    throw new Error("Yetkisiz erişim.");
-  }
-  return { userId, pet };
-}
+import { assertTextLimits, assertVetLimits } from "./validators";
+import { requireUser, requireOwnedPet } from "./lib/auth";
+import { vetObject as vetArg } from "./lib/vetArg";
 
 async function attachPhotoUrl(ctx: QueryCtx, pet: Doc<"pets">) {
   if (pet.photoStorageId) {
@@ -61,6 +41,8 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await requireUser(ctx);
+    assertTextLimits(args);
+    assertVetLimits(args.vets);
     // Bot abuse'a karşı: kullanıcı başına dakikada max 30 pet (gerçek kullanım için fazlasıyla yeterli)
     await checkRateLimit(ctx, userId, "pets.create", 30, 60_000);
     return await ctx.db.insert("pets", { ...args, userId });
@@ -78,9 +60,37 @@ export const update = mutation({
     photoStorageId: v.optional(v.id("_storage")),
     notes: v.optional(v.string()),
     vets: v.optional(v.array(vetArg)),
+    // Kullanıcı mevcut fotoğrafı kaldırdığında istemci bunu açıkça gönderir.
+    // Convex argümanlardaki `undefined`'ı eler; bu yüzden "kaldır" niyeti, alanın
+    // hiç gönderilmemesinden (ör. yalnızca vets güncellemesi) ayırt edilemez ve
+    // açık bir bayrak gerekir.
+    clearPhoto: v.optional(v.boolean()),
   },
-  handler: async (ctx, { id, ...patch }) => {
-    await requireOwnedPet(ctx, id);
+  handler: async (ctx, { id, clearPhoto, ...patch }) => {
+    const { userId, pet } = await requireOwnedPet(ctx, id);
+    assertTextLimits(patch);
+    assertVetLimits(patch.vets);
+    await checkRateLimit(ctx, userId, "pets.update", 120, 60_000);
+
+    // Artık kullanılmayan eski storage objesini sil ki yetim (orphan) dosya
+    // birikmesin. Yalnızca açık bir foto değişiminde tetiklenir; vets gibi kısmi
+    // güncellemeler fotoğrafa dokunmaz.
+    const replacingWithUpload =
+      patch.photoStorageId !== undefined && patch.photoStorageId !== pet.photoStorageId;
+    const switchingToUrl = typeof patch.photo === "string" && patch.photo.length > 0;
+
+    if (pet.photoStorageId && (replacingWithUpload || switchingToUrl || clearPhoto)) {
+      await ctx.storage.delete(pet.photoStorageId);
+    }
+
+    // URL'e geçildiyse ya da foto kaldırıldıysa eski storage referansını düşür.
+    if (clearPhoto) {
+      patch.photo = undefined;
+      patch.photoStorageId = undefined;
+    } else if (switchingToUrl) {
+      patch.photoStorageId = undefined;
+    }
+
     await ctx.db.patch(id, patch);
   },
 });
@@ -88,7 +98,8 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("pets") },
   handler: async (ctx, { id }) => {
-    const { pet } = await requireOwnedPet(ctx, id);
+    const { userId, pet } = await requireOwnedPet(ctx, id);
+    await checkRateLimit(ctx, userId, "pets.remove", 60, 60_000);
 
     const records = await ctx.db
       .query("records")

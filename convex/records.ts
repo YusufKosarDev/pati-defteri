@@ -1,14 +1,10 @@
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { mutation, query, type MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { checkRateLimit } from "./rateLimit";
-
-async function requireUser(ctx: QueryCtx | MutationCtx) {
-  const userId = await getAuthUserId(ctx);
-  if (!userId) throw new Error("Oturum açık değil.");
-  return userId;
-}
+import { assertTextLimits } from "./validators";
+import { requireUser, requireOwnedPet as requireOwnedPetFull } from "./lib/auth";
 
 async function requireOwnedRecord(ctx: MutationCtx, recordId: Id<"records">) {
   const userId = await requireUser(ctx);
@@ -19,12 +15,8 @@ async function requireOwnedRecord(ctx: MutationCtx, recordId: Id<"records">) {
   return { userId, record };
 }
 
-async function requireOwnedPet(ctx: MutationCtx, petId: Id<"pets">) {
-  const userId = await requireUser(ctx);
-  const pet = await ctx.db.get(petId);
-  if (!pet || pet.userId !== userId) {
-    throw new Error("Yetkisiz erişim.");
-  }
+async function requireOwnedPet(ctx: MutationCtx, petId: Id<"pets">): Promise<Id<"users">> {
+  const { userId } = await requireOwnedPetFull(ctx, petId);
   return userId;
 }
 
@@ -50,6 +42,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await requireOwnedPet(ctx, args.petId);
+    assertTextLimits(args);
     // Bot abuse'a karşı: kullanıcı başına dakikada max 60 kayıt
     await checkRateLimit(ctx, userId, "records.create", 60, 60_000);
     return await ctx.db.insert("records", { ...args, userId });
@@ -65,7 +58,9 @@ export const update = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, { id, ...patch }) => {
-    await requireOwnedRecord(ctx, id);
+    const { userId } = await requireOwnedRecord(ctx, id);
+    assertTextLimits(patch);
+    await checkRateLimit(ctx, userId, "records.update", 120, 60_000);
     await ctx.db.patch(id, patch);
   },
 });
@@ -73,15 +68,26 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("records") },
   handler: async (ctx, { id }) => {
-    await requireOwnedRecord(ctx, id);
+    const { userId } = await requireOwnedRecord(ctx, id);
+    await checkRateLimit(ctx, userId, "records.remove", 120, 60_000);
     await ctx.db.delete(id);
   },
 });
+
+// Tek bir hayvanın kayıt listesi yeniden sıralanır; gerçekçi üst sınırın çok
+// üstünde bir tavan koyarak kötü niyetli devasa dizilerin N×(get+patch) yükü
+// oluşturmasını engelliyoruz.
+const MAX_REORDER_IDS = 1000;
 
 export const reorder = mutation({
   args: { orderedIds: v.array(v.id("records")) },
   handler: async (ctx, { orderedIds }) => {
     const userId = await requireUser(ctx);
+    if (orderedIds.length > MAX_REORDER_IDS) {
+      throw new Error("Çok fazla kayıt; sıralama isteği reddedildi.");
+    }
+    // Sürükle-bırak sık tetiklenebilir; bot abuse'a karşı dakikada max 120 sıralama.
+    await checkRateLimit(ctx, userId, "records.reorder", 120, 60_000);
     await Promise.all(
       orderedIds.map(async (id, index) => {
         const r = await ctx.db.get(id);

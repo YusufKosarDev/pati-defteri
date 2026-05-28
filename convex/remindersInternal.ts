@@ -1,14 +1,7 @@
 import { internalQuery } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
-
-function daysUntil(dateStr: string | undefined | null): number | null {
-  if (!dateStr) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr);
-  target.setHours(0, 0, 0, 0);
-  return Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-}
+import { recordTypeLabelTR } from "./recordTypeLabel";
+import { daysUntil } from "./lib/dates";
 
 export const collectReminders = internalQuery({
   args: {},
@@ -52,7 +45,7 @@ export const collectReminders = internalQuery({
           `⚠️ ${overdue.length} gecikmiş: ` +
             overdue
               .slice(0, 3)
-              .map(({ record, days }) => `${petName(record.petId)} ${record.type} (${days}g)`)
+              .map(({ record, days }) => `${petName(record.petId)} ${recordTypeLabelTR(record.type)} (${days}g)`)
               .join(", ")
         );
       }
@@ -62,7 +55,7 @@ export const collectReminders = internalQuery({
             upcoming
               .slice(0, 3)
               .map(({ record, days }) =>
-                `${petName(record.petId)} ${record.type} (${days === 0 ? "bugün" : `${days}g`})`
+                `${petName(record.petId)} ${recordTypeLabelTR(record.type)} (${days === 0 ? "bugün" : `${days}g`})`
               )
               .join(", ")
         );

@@ -8,6 +8,7 @@ import {
 } from "@convex-dev/auth/server";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { assertTextLimits } from "./validators";
 
 const PASSWORD_PROVIDER = "password";
 const MIN_PASSWORD = 6;
@@ -88,6 +89,7 @@ export const upgradeGuest = action({
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedName = name.trim();
     if (!trimmedName) throw new Error("İsim zorunlu.");
+    assertTextLimits({ name: trimmedName });
     if (!/\S+@\S+\.\S+/.test(trimmedEmail)) throw new Error("Geçerli bir e-posta girin.");
     if (password.length < MIN_PASSWORD) {
       throw new Error(`Şifre en az ${MIN_PASSWORD} karakter olmalı.`);

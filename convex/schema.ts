@@ -1,14 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
-
-const vetObject = v.object({
-  clinicName: v.optional(v.string()),
-  doctorName: v.optional(v.string()),
-  phone: v.optional(v.string()),
-  address: v.optional(v.string()),
-  notes: v.optional(v.string()),
-});
+import { vetObject } from "./lib/vetArg";
 
 export default defineSchema({
   ...authTables,

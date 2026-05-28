@@ -81,6 +81,78 @@ describe("pets mutations", () => {
     expect(remainingWeights).toHaveLength(0);
   });
 
+  it("create aşırı uzun ismi reddeder (uzunluk doğrulaması)", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await t.run((ctx) => ctx.db.insert("users", { name: "Alice" }));
+
+    await expect(
+      t.withIdentity({ subject: userId }).mutation(api.pets.create, {
+        name: "x".repeat(101),
+        type: "Kedi",
+      })
+    ).rejects.toThrow(/en fazla/);
+
+    // Veteriner notu da sınırlanmalı
+    await expect(
+      t.withIdentity({ subject: userId }).mutation(api.pets.create, {
+        name: "Mırnav",
+        type: "Kedi",
+        vets: [{ clinicName: "x".repeat(151) }],
+      })
+    ).rejects.toThrow(/en fazla/);
+  });
+
+  it("update fotoğrafı değiştirince/kaldırınca eski storage objesini siler (orphan bırakmaz)", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await t.run((ctx) => ctx.db.insert("users", { name: "Alice" }));
+
+    const oldStorageId = await t.run((ctx) => ctx.storage.store(new Blob(["old"])));
+    const petId = await t.run((ctx) =>
+      ctx.db.insert("pets", { userId, name: "Mırnav", type: "Kedi", photoStorageId: oldStorageId })
+    );
+
+    // t.run dönüş değerini Convex değeri olarak serialize ettiğinden Blob'u
+    // doğrudan döndürmüyoruz; callback içinde varlık kontrolünü boolean'a çeviriyoruz.
+    const exists = (id) => t.run(async (ctx) => (await ctx.storage.get(id)) !== null);
+
+    // Yeni fotoğraf yüklenince eski silinmeli, yeni durmalı
+    const newStorageId = await t.run((ctx) => ctx.storage.store(new Blob(["new"])));
+    await t.withIdentity({ subject: userId }).mutation(api.pets.update, {
+      id: petId,
+      photoStorageId: newStorageId,
+    });
+    expect(await exists(oldStorageId)).toBe(false);
+    expect(await exists(newStorageId)).toBe(true);
+
+    // Fotoğraf tamamen kaldırılınca yeni de silinmeli ve referans düşmeli
+    await t.withIdentity({ subject: userId }).mutation(api.pets.update, {
+      id: petId,
+      clearPhoto: true,
+    });
+    expect(await exists(newStorageId)).toBe(false);
+    const updated = await t.run((ctx) => ctx.db.get(petId));
+    expect(updated?.photoStorageId).toBeUndefined();
+  });
+
+  it("vets güncellemesi mevcut fotoğrafa dokunmaz", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await t.run((ctx) => ctx.db.insert("users", { name: "Alice" }));
+    const storageId = await t.run((ctx) => ctx.storage.store(new Blob(["x"])));
+    const petId = await t.run((ctx) =>
+      ctx.db.insert("pets", { userId, name: "Mırnav", type: "Kedi", photoStorageId: storageId })
+    );
+
+    await t.withIdentity({ subject: userId }).mutation(api.pets.update, {
+      id: petId,
+      vets: [{ clinicName: "Pati" }],
+    });
+
+    const stillThere = await t.run(async (ctx) => (await ctx.storage.get(storageId)) !== null);
+    expect(stillThere).toBe(true);
+    const updated = await t.run((ctx) => ctx.db.get(petId));
+    expect(updated?.photoStorageId).toBe(storageId);
+  });
+
   it("vets alanı sadece tanımlı şekilde güncellenebilir (regresyon: spread bug)", async () => {
     // Bu test eski VetForm bug'ını yakalamak için: mutation validator'ı
     // bilinmeyen alanları reddetmeli. Eski kod `{ ...pet, vets: [...] }` gönderiyordu,

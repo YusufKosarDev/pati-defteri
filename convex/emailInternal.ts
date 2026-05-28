@@ -2,15 +2,8 @@ import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { checkRateLimit } from "./rateLimit";
-
-function daysUntil(dateStr: string | undefined | null): number | null {
-  if (!dateStr) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr);
-  target.setHours(0, 0, 0, 0);
-  return Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-}
+import { recordTypeLabelTR } from "./recordTypeLabel";
+import { daysUntil } from "./lib/dates";
 
 /**
  * Hatırlatıcı e-postasının içeriğini SUNUCUDA, kullanıcının kendi verisinden
@@ -60,7 +53,7 @@ export const prepareReminder = internalMutation({
     if (overdue.length > 0) {
       lines.push("⚠️ GECİKMİŞ BAKIMLAR:");
       for (const o of overdue) {
-        lines.push(`• ${petName(o.petId)} — ${o.type} (${o.days} gün geçti)`);
+        lines.push(`• ${petName(o.petId)} — ${recordTypeLabelTR(o.type)} (${o.days} gün geçti)`);
       }
       lines.push("");
     }
@@ -68,7 +61,7 @@ export const prepareReminder = internalMutation({
       lines.push("⏰ YAKLAŞAN BAKIMLAR (7 gün içinde):");
       for (const u of upcoming) {
         lines.push(
-          `• ${petName(u.petId)} — ${u.type} (${u.days === 0 ? "bugün" : `${u.days} gün kaldı`})`
+          `• ${petName(u.petId)} — ${recordTypeLabelTR(u.type)} (${u.days === 0 ? "bugün" : `${u.days} gün kaldı`})`
         );
       }
     }
