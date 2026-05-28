@@ -6,7 +6,7 @@ import { useAuth } from "../../hooks/useAuth";
 import ConfirmModal from "../UI/ConfirmModal";
 import toast from "react-hot-toast";
 
-const PatiLogo = ({ size = 16 }) => (
+const PatiLogo = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 100 100" fill="white" aria-hidden="true" focusable="false">
     <ellipse cx="20" cy="30" rx="10" ry="13"/>
     <ellipse cx="42" cy="20" rx="10" ry="13"/>
@@ -77,27 +77,31 @@ const CloseIcon = () => (
   </svg>
 );
 
-function Navbar({ setSearchOpen }) {
+type NavbarProps = {
+  searchOpen?: boolean;
+  setSearchOpen: (open: boolean) => void;
+};
+
+function Navbar({ setSearchOpen }: NavbarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const isLanding = location.pathname === "/";
   const isAuth = location.pathname === "/auth";
-  const isEN = i18n.language === "en";
 
   if (isLanding || isAuth) return null;
 
   const navLinks = [
     { path: "/app", label: t("myPets"), icon: <HomeIcon /> },
-    { path: "/stats", label: isEN ? "Statistics" : "İstatistikler", icon: <StatsIcon /> },
-    { path: "/calendar", label: isEN ? "Calendar" : "Takvim", icon: <CalendarIcon /> },
+    { path: "/stats", label: t("navStatistics"), icon: <StatsIcon /> },
+    { path: "/calendar", label: t("navCalendar"), icon: <CalendarIcon /> },
     { path: "/settings", label: t("settings"), icon: <SettingsIcon /> },
   ];
 
-  const handleNavigate = (path) => {
+  const handleNavigate = (path: string) => {
     navigate(path);
     setMenuOpen(false);
   };
@@ -108,13 +112,13 @@ function Navbar({ setSearchOpen }) {
       return;
     }
     await logout();
-    toast.success(isEN ? "Logged out." : "Çıkış yapıldı.");
+    toast.success(t("navLoggedOut"));
     navigate("/");
   };
 
   const confirmLogout = async () => {
     await logout();
-    toast.success(isEN ? "Logged out." : "Çıkış yapıldı.");
+    toast.success(t("navLoggedOut"));
     navigate("/");
   };
 
@@ -141,7 +145,7 @@ function Navbar({ setSearchOpen }) {
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-500 hover:text-gray-300 hover:border-gray-700 transition-all cursor-pointer text-sm"
           >
             <SearchIcon />
-            <span className="flex-1 text-left">{isEN ? "Search..." : "Ara..."}</span>
+            <span className="flex-1 text-left">{t("navSearch")}</span>
             <kbd className="text-xs bg-gray-800 px-1.5 py-0.5 rounded text-gray-600">⌘K</kbd>
           </button>
         </div>
@@ -183,14 +187,14 @@ function Navbar({ setSearchOpen }) {
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-gray-200 truncate">{user.name}</p>
                 <p className="text-xs text-gray-500 truncate">
-                  {user.isGuest ? (isEN ? "Guest" : "Misafir") : user.email}
+                  {user.isGuest ? t("settingsGuest") : user.email}
                 </p>
               </div>
               <button
                 onClick={handleLogout}
                 className="text-gray-500 hover:text-red-400 transition-colors cursor-pointer flex-shrink-0"
-                title={isEN ? "Logout" : "Çıkış Yap"}
-                aria-label={isEN ? "Logout" : "Çıkış Yap"}
+                title={t("navLogout")}
+                aria-label={t("navLogout")}
               >
                 <LogoutIcon />
               </button>
@@ -212,7 +216,7 @@ function Navbar({ setSearchOpen }) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSearchOpen(true)}
-              aria-label={isEN ? "Open search" : "Aramayı aç"}
+              aria-label={t("navOpenSearch")}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition-all cursor-pointer"
             >
               <SearchIcon />
@@ -224,7 +228,7 @@ function Navbar({ setSearchOpen }) {
             )}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              aria-label={menuOpen ? (isEN ? "Close menu" : "Menüyü kapat") : (isEN ? "Open menu" : "Menüyü aç")}
+              aria-label={menuOpen ? t("navCloseMenu") : t("navOpenMenu")}
               aria-expanded={menuOpen}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition-all cursor-pointer"
             >
@@ -291,10 +295,10 @@ function Navbar({ setSearchOpen }) {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-gray-200 truncate">{user.name}</p>
                       <p className="text-xs text-gray-500 truncate">
-                        {user.isGuest ? (isEN ? "Guest" : "Misafir") : user.email}
+                        {user.isGuest ? t("settingsGuest") : user.email}
                       </p>
                     </div>
-                    <button onClick={handleLogout} className="text-gray-500 hover:text-red-400 transition-colors cursor-pointer" aria-label={isEN ? "Logout" : "Çıkış Yap"}>
+                    <button onClick={handleLogout} className="text-gray-500 hover:text-red-400 transition-colors cursor-pointer" aria-label={t("navLogout")}>
                       <LogoutIcon />
                     </button>
                   </div>
@@ -309,11 +313,9 @@ function Navbar({ setSearchOpen }) {
         isOpen={logoutConfirm}
         onClose={() => setLogoutConfirm(false)}
         onConfirm={confirmLogout}
-        title={isEN ? "Are you sure?" : "Emin misiniz?"}
-        desc={isEN
-          ? "You're a guest. If you log out without upgrading to an account, you'll lose access to your data. You can upgrade from Settings."
-          : "Misafir kullanıcısınız. Hesaba yükseltmeden çıkış yaparsanız verilerinize erişiminizi kaybedersiniz. Ayarlar'dan yükseltebilirsiniz."}
-        confirmText={isEN ? "Logout" : "Çıkış Yap"}
+        title={t("navGuestLogoutTitle")}
+        desc={t("navGuestLogoutDesc")}
+        confirmText={t("navLogout")}
       />
     </>
   );

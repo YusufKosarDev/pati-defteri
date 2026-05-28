@@ -1,17 +1,25 @@
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer
+  Tooltip, ResponsiveContainer,
 } from "recharts";
 import { formatDate } from "../../utils/dateHelpers";
+import type { Weight } from "../../types";
 
-function CustomTooltip({ active, payload, label }) {
+type TooltipProps = {
+  active?: boolean;
+  payload?: Array<{ value?: number; payload?: { notes?: string } }>;
+  label?: string | number;
+};
+
+function CustomTooltip({ active, payload, label }: TooltipProps) {
   if (active && payload && payload.length) {
+    const point = payload[0];
     return (
       <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-md p-3 text-sm">
         <p className="font-semibold text-gray-200">{label}</p>
-        <p className="text-emerald-400 font-bold">{payload[0].value} kg</p>
-        {payload[0]?.payload?.notes && (
-          <p className="text-gray-500 text-xs mt-1">{payload[0].payload.notes}</p>
+        <p className="text-emerald-400 font-bold">{point.value} kg</p>
+        {point.payload?.notes && (
+          <p className="text-gray-500 text-xs mt-1">{point.payload.notes}</p>
         )}
       </div>
     );
@@ -19,8 +27,10 @@ function CustomTooltip({ active, payload, label }) {
   return null;
 }
 
-function WeightChart({ weights }) {
-  const sorted = [...weights].sort((a, b) => new Date(a.date) - new Date(b.date));
+function WeightChart({ weights }: { weights: Weight[] }) {
+  const sorted = [...weights].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
 
   const data = sorted.map((w) => ({
     date: formatDate(w.date),

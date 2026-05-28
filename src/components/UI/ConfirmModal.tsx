@@ -1,9 +1,27 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import useModalA11y from "../../hooks/useModalA11y";
 
-function ConfirmModal({ isOpen, onClose, onConfirm, title, desc, confirmText, confirmVariant = "danger" }) {
+type ConfirmModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: ReactNode;
+  desc?: ReactNode;
+  confirmText?: string;
+  confirmVariant?: "danger" | "primary";
+};
+
+function ConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  desc,
+  confirmText,
+  confirmVariant = "danger",
+}: ConfirmModalProps) {
   const { t } = useTranslation();
   const dialogRef = useModalA11y(isOpen, onClose);
   const titleId = useId();

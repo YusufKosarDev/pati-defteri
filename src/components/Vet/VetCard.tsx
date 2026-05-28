@@ -6,8 +6,17 @@ import Modal from "../UI/Modal";
 import VetForm from "./VetForm";
 import Button from "../UI/Button";
 import ConfirmModal from "../UI/ConfirmModal";
+import type { Pet, Vet } from "../../types";
 
-function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
+type SingleVetCardProps = {
+  vet: Vet;
+  index: number;
+  onEdit: (index: number) => void;
+  onDelete: (index: number) => void;
+};
+
+function SingleVetCard({ vet, index, onEdit, onDelete }: SingleVetCardProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const handleCopyPhone = () => {
@@ -31,24 +40,16 @@ function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
               🏥
             </div>
             <div>
-              <p className="text-xs text-emerald-400 font-medium uppercase tracking-wider">
-                {isEN ? "Clinic" : "Klinik"}
-              </p>
+              <p className="text-xs text-emerald-400 font-medium uppercase tracking-wider">{t("vetClinicShort")}</p>
               <p className="text-base font-bold text-gray-100">{vet.clinicName}</p>
             </div>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => onEdit(index)}
-              className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-400 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors"
-            >
-              {isEN ? "Edit" : "Düzenle"}
+            <button onClick={() => onEdit(index)} className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-400 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors">
+              {t("edit")}
             </button>
-            <button
-              onClick={() => onDelete(index)}
-              className="text-xs bg-red-950 hover:bg-red-900 text-red-400 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors"
-            >
-              {isEN ? "Delete" : "Sil"}
+            <button onClick={() => onDelete(index)} className="text-xs bg-red-950 hover:bg-red-900 text-red-400 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors">
+              {t("delete")}
             </button>
           </div>
         </div>
@@ -59,10 +60,10 @@ function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
         {!vet.clinicName && (
           <div className="flex justify-end gap-2">
             <button onClick={() => onEdit(index)} className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-400 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors">
-              {isEN ? "Edit" : "Düzenle"}
+              {t("edit")}
             </button>
             <button onClick={() => onDelete(index)} className="text-xs bg-red-950 hover:bg-red-900 text-red-400 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors">
-              {isEN ? "Delete" : "Sil"}
+              {t("delete")}
             </button>
           </div>
         )}
@@ -71,7 +72,7 @@ function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-blue-500/10 rounded-xl flex items-center justify-center text-lg flex-shrink-0">🩺</div>
             <div>
-              <p className="text-xs text-gray-500">{isEN ? "Doctor" : "Doktor"}</p>
+              <p className="text-xs text-gray-500">{t("vetDoctor2")}</p>
               <p className="text-sm font-semibold text-gray-100">{vet.doctorName}</p>
             </div>
           </div>
@@ -81,12 +82,12 @@ function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-violet-500/10 rounded-xl flex items-center justify-center text-lg flex-shrink-0">📞</div>
             <div className="flex-1">
-              <p className="text-xs text-gray-500">{isEN ? "Phone" : "Telefon"}</p>
+              <p className="text-xs text-gray-500">{t("vetPhone2")}</p>
               <p className="text-sm font-semibold text-gray-100">{vet.phone}</p>
             </div>
             <div className="flex gap-2">
               <a href={`tel:${vet.phone}`} className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors">
-                {isEN ? "Call" : "Ara"}
+                {t("vetCall")}
               </a>
               <button onClick={handleCopyPhone} className="bg-gray-800 hover:bg-gray-700 text-gray-400 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer">
                 <AnimatePresence mode="wait">
@@ -94,7 +95,7 @@ function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
                     <motion.span key="copied" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-emerald-400">✓</motion.span>
                   ) : (
                     <motion.span key="copy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                      {isEN ? "Copy" : "Kopyala"}
+                      {t("vetCopy")}
                     </motion.span>
                   )}
                 </AnimatePresence>
@@ -107,7 +108,7 @@ function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-orange-500/10 rounded-xl flex items-center justify-center text-lg flex-shrink-0">📍</div>
             <div className="flex-1">
-              <p className="text-xs text-gray-500">{isEN ? "Address" : "Adres"}</p>
+              <p className="text-xs text-gray-500">{t("vetAddress2")}</p>
               <p className="text-sm font-semibold text-gray-100">{vet.address}</p>
             </div>
             <a
@@ -116,7 +117,7 @@ function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
               rel="noopener noreferrer"
               className="bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors flex-shrink-0"
             >
-              {isEN ? "Maps" : "Harita"}
+              {t("vetMaps")}
             </a>
           </div>
         )}
@@ -125,7 +126,7 @@ function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 bg-gray-800 rounded-xl flex items-center justify-center text-lg flex-shrink-0 mt-0.5">🗒️</div>
             <div>
-              <p className="text-xs text-gray-500">{isEN ? "Notes" : "Notlar"}</p>
+              <p className="text-xs text-gray-500">{t("vetNotes2")}</p>
               <p className="text-sm text-gray-300 leading-relaxed">{vet.notes}</p>
             </div>
           </div>
@@ -136,7 +137,7 @@ function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
         <div className="border-t border-gray-800 px-5 py-3 flex gap-3">
           {vet.phone && (
             <a href={`tel:${vet.phone}`} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-medium text-center transition-colors">
-              📞 {isEN ? "Call Now" : "Hemen Ara"}
+              {t("vetCallNow")}
             </a>
           )}
           {vet.address && (
@@ -146,7 +147,7 @@ function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
               rel="noopener noreferrer"
               className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2.5 rounded-xl text-sm font-medium text-center transition-colors"
             >
-              📍 {isEN ? "Get Directions" : "Yol Tarifi"}
+              {t("vetDirections")}
             </a>
           )}
         </div>
@@ -155,18 +156,17 @@ function SingleVetCard({ vet, index, isEN, onEdit, onDelete }) {
   );
 }
 
-function VetCard({ pet }) {
+function VetCard({ pet }: { pet: Pet }) {
   const [addOpen, setAddOpen] = useState(false);
-  const [editIndex, setEditIndex] = useState(null);
-  const [deleteIndex, setDeleteIndex] = useState(null);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const { updatePet } = usePet();
-  const { i18n } = useTranslation();
-  const isEN = i18n.language === "en";
+  const { t } = useTranslation();
 
   // Geriye dönük uyumluluk: eski pet.vet → pet.vets
-  const vets = pet.vets || (pet.vet && (pet.vet.clinicName || pet.vet.doctorName || pet.vet.phone) ? [pet.vet] : []);
+  const vets: Vet[] = pet.vets || (pet.vet && (pet.vet.clinicName || pet.vet.doctorName || pet.vet.phone) ? [pet.vet] : []);
 
-  const handleDelete = async (index) => {
+  const handleDelete = async (index: number) => {
     const updatedVets = vets.filter((_, i) => i !== index);
     try {
       await updatePet(pet.id, { vets: updatedVets });
@@ -185,18 +185,12 @@ function VetCard({ pet }) {
           className="bg-gray-900 rounded-2xl border border-dashed border-gray-700 p-10 text-center"
         >
           <div className="text-5xl mb-3">🏥</div>
-          <p className="text-gray-400 text-sm mb-2 font-medium">
-            {isEN ? "No veterinarian info added yet." : "Henüz veteriner bilgisi eklenmedi."}
-          </p>
-          <p className="text-gray-600 text-xs mb-5">
-            {isEN ? "Add your vet's contact info for quick access." : "Hızlı erişim için veterinerinizin iletişim bilgilerini ekleyin."}
-          </p>
-          <Button onClick={() => setAddOpen(true)}>
-            + {isEN ? "Add Veterinarian" : "Veteriner Ekle"}
-          </Button>
+          <p className="text-gray-400 text-sm mb-2 font-medium">{t("vetEmptyTitle")}</p>
+          <p className="text-gray-600 text-xs mb-5">{t("vetEmptyDesc")}</p>
+          <Button onClick={() => setAddOpen(true)}>{t("vetAddNewLong")}</Button>
         </motion.div>
 
-        <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title={isEN ? "Add Veterinarian" : "Veteriner Ekle"}>
+        <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title={t("addVetTitle")}>
           <VetForm petId={pet.id} onClose={() => setAddOpen(false)} />
         </Modal>
       </>
@@ -208,11 +202,9 @@ function VetCard({ pet }) {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold text-gray-100">
-            🏥 {isEN ? "Veterinarians" : "Veterinerler"} ({vets.length})
+            🏥 {t("vetsTitle")} ({vets.length})
           </h3>
-          <Button onClick={() => setAddOpen(true)}>
-            + {isEN ? "Add New" : "Yeni Ekle"}
-          </Button>
+          <Button onClick={() => setAddOpen(true)}>{t("vetAddNew")}</Button>
         </div>
 
         {vets.map((vet, index) => (
@@ -220,7 +212,6 @@ function VetCard({ pet }) {
             key={`${vet.clinicName ?? ""}|${vet.doctorName ?? ""}|${vet.phone ?? ""}`}
             vet={vet}
             index={index}
-            isEN={isEN}
             onEdit={(i) => setEditIndex(i)}
             onDelete={(i) => setDeleteIndex(i)}
           />
@@ -228,12 +219,12 @@ function VetCard({ pet }) {
       </div>
 
       {/* Yeni veteriner ekle */}
-      <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title={isEN ? "Add Veterinarian" : "Veteriner Ekle"}>
+      <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title={t("addVetTitle")}>
         <VetForm petId={pet.id} onClose={() => setAddOpen(false)} />
       </Modal>
 
       {/* Veteriner düzenle */}
-      <Modal isOpen={editIndex !== null} onClose={() => setEditIndex(null)} title={isEN ? "Edit Veterinarian" : "Veteriner Düzenle"}>
+      <Modal isOpen={editIndex !== null} onClose={() => setEditIndex(null)} title={t("editVetTitle")}>
         <VetForm
           petId={pet.id}
           onClose={() => setEditIndex(null)}
@@ -246,10 +237,10 @@ function VetCard({ pet }) {
       <ConfirmModal
         isOpen={deleteIndex !== null}
         onClose={() => setDeleteIndex(null)}
-        onConfirm={() => handleDelete(deleteIndex)}
-        title={isEN ? "Delete Veterinarian?" : "Veteriner Silinsin mi?"}
-        desc={isEN ? "This veterinarian info will be permanently deleted." : "Bu veteriner bilgisi kalıcı olarak silinecek."}
-        confirmText={isEN ? "Delete" : "Sil"}
+        onConfirm={() => { if (deleteIndex !== null) handleDelete(deleteIndex); }}
+        title={t("vetDeleteConfirmTitle")}
+        desc={t("vetDeleteConfirmDesc")}
+        confirmText={t("delete")}
       />
     </>
   );

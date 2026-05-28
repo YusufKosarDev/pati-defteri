@@ -7,14 +7,17 @@ import WeightForm from "./WeightForm";
 import Modal from "../UI/Modal";
 import Button from "../UI/Button";
 import EmptyState from "../UI/EmptyState";
+import type { Id } from "../../../convex/_generated/dataModel";
 
-function WeightSection({ petId }) {
+function WeightSection({ petId }: { petId: Id<"pets"> }) {
   const { getWeightsByPet, deleteWeight } = usePet();
   const { t } = useTranslation();
   const [addOpen, setAddOpen] = useState(false);
 
   const weights = getWeightsByPet(petId);
-  const sorted = [...weights].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sorted = [...weights].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
   const latest = sorted[0];
 
   return (

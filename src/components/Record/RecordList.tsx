@@ -1,44 +1,46 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext, verticalListSortingStrategy, arrayMove,
 } from "@dnd-kit/sortable";
 import { usePet } from "../../hooks/usePet";
-import { getTypeAliases } from "../../utils/recordTypes";
+import { RECORD_TYPE_KEYS, recordTypeLabel } from "../../utils/recordTypes";
 import { sortRecordsForDisplay } from "../../utils/sortRecords";
 import RecordCard from "./RecordCard";
 import Modal from "../UI/Modal";
 import RecordForm from "./RecordForm";
 import Button from "../UI/Button";
 import EmptyState from "../UI/EmptyState";
+import type { Id } from "../../../convex/_generated/dataModel";
 
-const RECORD_TYPES_TR = ["Tümü", "Karma Aşı", "Kuduz Aşısı", "Parazit Damlası", "Pire İlacı", "Kurtluk İlacı", "Veteriner Ziyareti", "Diğer"];
-const RECORD_TYPES_EN = ["All", "Mixed Vaccine", "Rabies Vaccine", "Parasite Drop", "Flea Medicine", "Dewormer", "Vet Visit", "Other"];
-
-function RecordList({ petId }) {
+function RecordList({ petId }: { petId: Id<"pets"> }) {
   const { getRecordsByPet, reorderRecords } = usePet();
   const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
   const [addOpen, setAddOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState<string>("all");
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const RECORD_TYPES = isEN ? RECORD_TYPES_EN : RECORD_TYPES_TR;
+  // Filtre seçenekleri: "Tümü" + kanonik kayıt türü anahtarları (etiketler dile göre).
+  const filterOptions = [
+    { key: "all", label: t("filterAll") },
+    ...RECORD_TYPE_KEYS.map((k) => ({ key: k, label: recordTypeLabel(k, isEN) })),
+  ];
 
   const allRecords = getRecordsByPet(petId);
   const filtered = activeFilter === "all"
     ? allRecords
-    : allRecords.filter((r) => getTypeAliases(activeFilter).includes(r.type));
+    : allRecords.filter((r) => r.type === activeFilter);
   const sorted = sortRecordsForDisplay(filtered);
 
   // Sürükle-bırak yalnızca filtresiz ("Tümü") görünümde — bir alt küme yeniden
   // sıralanırsa global `order` tutarsız olurdu.
   const dragEnabled = activeFilter === "all";
 
-  const handleDragEnd = async (event) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     if (!dragEnabled) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -57,22 +59,19 @@ function RecordList({ petId }) {
 
       {allRecords.length > 0 && (
         <div className="flex gap-2 flex-wrap mb-4">
-          {RECORD_TYPES.map((type, idx) => {
-            const filterVal = idx === 0 ? "all" : type;
-            return (
-              <button
-                key={type}
-                onClick={() => setActiveFilter(filterVal)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                  activeFilter === filterVal
-                    ? "bg-emerald-500 text-white"
-                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                }`}
-              >
-                {type}
-              </button>
-            );
-          })}
+          {filterOptions.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setActiveFilter(opt.key)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                activeFilter === opt.key
+                  ? "bg-emerald-500 text-white"
+                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       )}
 

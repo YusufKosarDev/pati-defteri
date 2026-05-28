@@ -3,12 +3,20 @@ import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { usePet } from "../../hooks/usePet";
 import { formatDate, calculateAge, getAvatarGradient, isOverdue, isUpcoming } from "../../utils/dateHelpers";
+import { petTypeEmoji, petTypeLabel } from "../../utils/petType";
 import Button from "../UI/Button";
 import Modal from "../UI/Modal";
 import ConfirmModal from "../UI/ConfirmModal";
 import PetForm from "./PetForm";
+import type { Pet } from "../../types";
 
-function PetCard({ pet, onSelect, index = 0 }) {
+type PetCardProps = {
+  pet: Pet;
+  onSelect: (pet: Pet) => void;
+  index?: number;
+};
+
+function PetCard({ pet, onSelect, index = 0 }: PetCardProps) {
   const { deletePet, getRecordsByPet } = usePet();
   const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
@@ -17,7 +25,7 @@ function PetCard({ pet, onSelect, index = 0 }) {
 
   const age = calculateAge(pet.birthDate);
   const gradient = getAvatarGradient(pet.name);
-  const emoji = pet.type === "Kedi" || pet.type === "Cat" ? "🐱" : pet.type === "Köpek" || pet.type === "Dog" ? "🐶" : "🐾";
+  const emoji = petTypeEmoji(pet.type);
 
   const records = getRecordsByPet(pet.id);
   const overdueCount = records.filter((r) => r.nextDate && isOverdue(r.nextDate)).length;
@@ -56,7 +64,7 @@ function PetCard({ pet, onSelect, index = 0 }) {
               <h3 className="text-lg font-bold text-gray-100 truncate">{pet.name}</h3>
               <span className="flex-shrink-0">{emoji}</span>
             </div>
-            <p className="text-sm text-gray-500 truncate">{pet.type}{pet.breed ? ` · ${pet.breed}` : ""}</p>
+            <p className="text-sm text-gray-500 truncate">{petTypeLabel(pet.type, isEN)}{pet.breed ? ` · ${pet.breed}` : ""}</p>
             {age && <p className="text-xs text-emerald-400 font-medium">{age}</p>}
             {pet.birthDate && <p className="text-xs text-gray-600">{formatDate(pet.birthDate)}</p>}
           </div>
@@ -71,9 +79,9 @@ function PetCard({ pet, onSelect, index = 0 }) {
             <span>{overdueCount > 0 ? "⚠️" : "⏰"}</span>
             <span>
               {overdueCount > 0
-                ? `${overdueCount} ${isEN ? "overdue" : "gecikmiş"}`
-                : `${upcomingCount} ${isEN ? "upcoming" : "yaklaşan"}`
-              } {isEN ? "care" : "bakım"}
+                ? t("petCareOverdueLabel", { count: overdueCount })
+                : t("petCareUpcomingLabel", { count: upcomingCount })
+              } {t("petCareCare")}
             </span>
           </div>
         )}

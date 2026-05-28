@@ -1,12 +1,17 @@
-import { useState, useRef } from "react";
+import { useId, useState, useRef, type ChangeEvent, type DragEvent } from "react";
 import { useMutation } from "convex/react";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
 import { usePet } from "../../hooks/usePet";
 import useConfetti from "../../hooks/useConfetti";
 import Button from "../UI/Button";
 import { api } from "../../../convex/_generated/api";
+import { PET_TYPE_KEYS, petTypeLabel } from "../../utils/petType";
+import { captureException } from "../../lib/sentry";
+import type { Id } from "../../../convex/_generated/dataModel";
+import type { Pet, PetInput } from "../../types";
 
-const compressImageToBlob = (file, maxWidth = 400, quality = 0.75) => {
+const compressImageToBlob = (file: File, maxWidth = 400, quality = 0.75): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -22,6 +27,7 @@ const compressImageToBlob = (file, maxWidth = 400, quality = 0.75) => {
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas context alınamadı"));
         ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob(
           (blob) => (blob ? resolve(blob) : reject(new Error("Sıkıştırma başarısız"))),
@@ -30,54 +36,62 @@ const compressImageToBlob = (file, maxWidth = 400, quality = 0.75) => {
         );
       };
       img.onerror = reject;
-      img.src = e.target.result;
+      img.src = e.target?.result as string;
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 };
 
-function PetForm({ onClose, existingPet = null }) {
+type PetFormState = {
+  name: string;
+  type: string;
+  breed: string;
+  birthDate: string;
+  photo: string;
+  photoStorageId: Id<"_storage"> | undefined;
+  notes: string;
+};
+
+function PetForm({ onClose, existingPet = null }: { onClose: () => void; existingPet?: Pet | null }) {
   const { addPet, updatePet, pets } = usePet();
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const { t, i18n } = useTranslation();
   const { fireConfetti, fireStar } = useConfetti();
   const isEN = i18n.language === "en";
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const fid = useId();
 
   const initialPhotoIsUrl =
-    existingPet?.photo && !existingPet.photo.startsWith("data:") && !existingPet.photoStorageId;
+    !!existingPet?.photo && !existingPet.photo.startsWith("data:") && !existingPet.photoStorageId;
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<PetFormState>({
     name: existingPet?.name || "",
-    type: existingPet?.type || t("petCat"),
+    type: existingPet?.type || "cat",
     breed: existingPet?.breed || "",
     birthDate: existingPet?.birthDate || "",
-    photo: initialPhotoIsUrl ? existingPet.photo : "",
+    photo: initialPhotoIsUrl ? existingPet!.photo : "",
     photoStorageId: existingPet?.photoStorageId || undefined,
     notes: existingPet?.notes || "",
   });
 
   const [photoPreview, setPhotoPreview] = useState(existingPet?.photo || "");
-  const [photoMode, setPhotoMode] = useState(initialPhotoIsUrl ? "url" : "file");
+  const [photoMode, setPhotoMode] = useState<"file" | "url">(initialPhotoIsUrl ? "url" : "file");
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handlePhotoURL = (e) => {
+  const handlePhotoURL = (e: ChangeEvent<HTMLInputElement>) => {
     const url = e.target.value;
     setForm({ ...form, photo: url, photoStorageId: undefined });
     setPhotoPreview(url);
   };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
-      alert(isEN ? "File size must be less than 5MB!" : "Dosya boyutu 5MB'dan küçük olmalı!");
+      toast.error(t("petFileTooBig"));
       return;
     }
 
@@ -91,16 +105,21 @@ function PetForm({ onClose, existingPet = null }) {
         body: blob,
       });
       if (!result.ok) throw new Error(`Upload failed: ${result.status}`);
-      const { storageId } = await result.json();
+      const { storageId } = (await result.json()) as { storageId: Id<"_storage"> };
 
       setForm({ ...form, photoStorageId: storageId, photo: "" });
       setPhotoPreview(URL.createObjectURL(blob));
     } catch (err) {
-      console.error(err);
-      alert(isEN ? "Could not upload photo." : "Fotoğraf yüklenemedi.");
+      captureException(err);
+      toast.error(t("petFileUploadFailed"));
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) void processFile(file);
   };
 
   const handleRemovePhoto = () => {
@@ -109,19 +128,19 @@ function PetForm({ onClose, existingPet = null }) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleDrop = async (e) => {
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith("image/")) {
-      await handleFileChange({ target: { files: [file] } });
+      void processFile(file);
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name) return;
 
-    const payload = {
+    const payload: PetInput & { clearPhoto?: boolean } = {
       name: form.name,
       type: form.type,
       breed: form.breed || undefined,
@@ -133,6 +152,11 @@ function PetForm({ onClose, existingPet = null }) {
 
     try {
       if (existingPet) {
+        // Daha önce foto vardı ve kullanıcı kaldırdıysa sunucuya açıkça bildir;
+        // aksi halde eski storage objesi yetim kalırdı.
+        const hadPhoto = !!(existingPet.photoStorageId || existingPet.photo);
+        const hasPhotoNow = !!(form.photoStorageId || form.photo);
+        if (hadPhoto && !hasPhotoNow) payload.clearPhoto = true;
         await updatePet(existingPet.id, payload);
       } else {
         await addPet(payload);
@@ -154,27 +178,27 @@ function PetForm({ onClose, existingPet = null }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
-        <label className={labelClass}>{t("petName")} *</label>
-        <input name="name" value={form.name} onChange={handleChange} className={inputClass} placeholder={t("petNamePlaceholder")} required />
+        <label htmlFor={`${fid}-name`} className={labelClass}>{t("petName")} *</label>
+        <input id={`${fid}-name`} name="name" value={form.name} onChange={handleChange} className={inputClass} placeholder={t("petNamePlaceholder")} required />
       </div>
 
       <div>
-        <label className={labelClass}>{t("petType")}</label>
-        <select name="type" value={form.type} onChange={handleChange} className={inputClass}>
-          <option>{t("petCat")}</option>
-          <option>{t("petDog")}</option>
-          <option>{t("petOther")}</option>
+        <label htmlFor={`${fid}-type`} className={labelClass}>{t("petType")}</label>
+        <select id={`${fid}-type`} name="type" value={form.type} onChange={handleChange} className={inputClass}>
+          {PET_TYPE_KEYS.map((k) => (
+            <option key={k} value={k}>{petTypeLabel(k, isEN)}</option>
+          ))}
         </select>
       </div>
 
       <div>
-        <label className={labelClass}>{t("petBreed")}</label>
-        <input name="breed" value={form.breed} onChange={handleChange} className={inputClass} placeholder={t("petBreedPlaceholder")} />
+        <label htmlFor={`${fid}-breed`} className={labelClass}>{t("petBreed")}</label>
+        <input id={`${fid}-breed`} name="breed" value={form.breed} onChange={handleChange} className={inputClass} placeholder={t("petBreedPlaceholder")} />
       </div>
 
       <div>
-        <label className={labelClass}>{t("petBirthDate")}</label>
-        <input name="birthDate" type="date" value={form.birthDate} onChange={handleChange} className={inputClass} />
+        <label htmlFor={`${fid}-birthDate`} className={labelClass}>{t("petBirthDate")}</label>
+        <input id={`${fid}-birthDate`} name="birthDate" type="date" value={form.birthDate} onChange={handleChange} className={inputClass} />
       </div>
 
       <div>
@@ -186,7 +210,7 @@ function PetForm({ onClose, existingPet = null }) {
             onClick={() => setPhotoMode("file")}
             className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${photoMode === "file" ? "bg-emerald-500 text-white" : "text-gray-400 hover:text-gray-200"}`}
           >
-            📁 {isEN ? "Upload" : "Yükle"}
+            📁 {t("petFileUpload")}
           </button>
           <button
             type="button"
@@ -222,13 +246,13 @@ function PetForm({ onClose, existingPet = null }) {
             {uploading ? (
               <div className="flex flex-col items-center gap-2">
                 <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-xs text-emerald-400">{isEN ? "Uploading..." : "Yükleniyor..."}</p>
+                <p className="text-xs text-emerald-400">{t("petFileUploading")}</p>
               </div>
             ) : (
               <>
                 <div className="text-2xl mb-1">📷</div>
-                <p className="text-xs text-gray-400">{isEN ? "Select or drag photo" : "Fotoğraf seç veya sürükle"}</p>
-                <p className="text-xs text-gray-600 mt-0.5">{isEN ? "Max 5MB · Auto compressed" : "Max 5MB · Otomatik sıkıştırılır"}</p>
+                <p className="text-xs text-gray-400">{t("petFileSelect")}</p>
+                <p className="text-xs text-gray-600 mt-0.5">{t("petFileMax")}</p>
               </>
             )}
             <input
@@ -251,8 +275,8 @@ function PetForm({ onClose, existingPet = null }) {
       </div>
 
       <div>
-        <label className={labelClass}>{t("petNotes")}</label>
-        <textarea name="notes" value={form.notes} onChange={handleChange} className={inputClass} rows={3} placeholder={t("petNotesPlaceholder")} />
+        <label htmlFor={`${fid}-notes`} className={labelClass}>{t("petNotes")}</label>
+        <textarea id={`${fid}-notes`} name="notes" value={form.notes} onChange={handleChange} className={inputClass} rows={3} placeholder={t("petNotesPlaceholder")} />
       </div>
 
       <div className="flex gap-2 justify-end mt-2">

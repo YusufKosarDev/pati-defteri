@@ -4,21 +4,27 @@ import { useNavigate } from "react-router-dom";
 import { usePet } from "../../hooks/usePet";
 import { useTranslation } from "react-i18next";
 import { formatDate, getAvatarColor } from "../../utils/dateHelpers";
-import { matchesType } from "../../utils/recordTypes";
+import { matchesRecordType, recordTypeLabel, type RecordTypeKey } from "../../utils/recordTypes";
+import { petTypeEmoji, petTypeLabel, petTypeMatches } from "../../utils/petType";
+import type { Id } from "../../../convex/_generated/dataModel";
+import type { Pet, PetRecord } from "../../types";
 
-const RECORD_ICONS = {
-  "Karma Aşı": "💉", "Kuduz Aşısı": "🛡️", "Parazit Damlası": "💧",
-  "Pire İlacı": "🪲", "Kurtluk İlacı": "🪱", "Veteriner Ziyareti": "🏥", "Diğer": "📋",
-  "Mixed Vaccine": "💉", "Rabies Vaccine": "🛡️", "Parasite Drop": "💧",
-  "Flea Medicine": "🪲", "Dewormer": "🪱", "Vet Visit": "🏥", "Other": "📋",
+const RECORD_ICONS: Record<RecordTypeKey, string> = {
+  mixed_vaccine: "💉",
+  rabies: "🛡️",
+  parasite_drop: "💧",
+  flea: "🪲",
+  dewormer: "🪱",
+  vet_visit: "🏥",
+  other: "📋",
 };
 
-function GlobalSearch({ isOpen, onClose }) {
+function GlobalSearch({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { pets, records } = usePet();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
   const navigate = useNavigate();
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -41,7 +47,7 @@ function GlobalSearch({ isOpen, onClose }) {
         ? pets.filter((p) =>
             p.name.toLowerCase().includes(q) ||
             p.breed?.toLowerCase().includes(q) ||
-            p.type?.toLowerCase().includes(q)
+            petTypeMatches(p.type, q)
           )
         : [],
     [q, pets]
@@ -51,26 +57,26 @@ function GlobalSearch({ isOpen, onClose }) {
     () =>
       q
         ? records.filter((r) =>
-            matchesType(r.type, q) ||
+            matchesRecordType(r.type, q) ||
             r.notes?.toLowerCase().includes(q)
           )
         : [],
     [q, records]
   );
 
-  const getPetName = (petId) => pets.find((p) => p.id === petId)?.name || "";
-  const getPetAvatar = (petId) => {
+  const getPetName = (petId: Id<"pets">) => pets.find((p) => p.id === petId)?.name || "";
+  const getPetAvatar = (petId: Id<"pets">) => {
     const pet = pets.find((p) => p.id === petId);
     if (!pet) return null;
     return { initial: pet.name?.charAt(0).toUpperCase(), color: getAvatarColor(pet.name) };
   };
 
-  const handleSelectPet = useCallback((pet) => {
+  const handleSelectPet = useCallback((pet: Pet) => {
     navigate(`/pets/${pet.id}`);
     handleClose();
   }, [navigate, handleClose]);
 
-  const handleSelectRecord = useCallback((record) => {
+  const handleSelectRecord = useCallback((record: PetRecord) => {
     navigate(`/pets/${record.petId}`);
     handleClose();
   }, [navigate, handleClose]);
@@ -78,7 +84,7 @@ function GlobalSearch({ isOpen, onClose }) {
   // Esc kapatır; Enter ilk sonucu (önce hayvanlar, sonra kayıtlar) seçer.
   useEffect(() => {
     if (!isOpen) return;
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         handleClose();
       } else if (e.key === "Enter") {
@@ -122,7 +128,7 @@ function GlobalSearch({ isOpen, onClose }) {
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={isEN ? "Search pets and records..." : "Hayvan ve kayıt ara..."}
+                placeholder={t("searchOpenLong")}
                 className="flex-1 bg-transparent text-gray-100 placeholder-gray-500 text-sm focus:outline-none"
               />
               {query && (
@@ -138,25 +144,25 @@ function GlobalSearch({ isOpen, onClose }) {
               {!q && (
                 <div className="px-4 py-8 text-center text-gray-600">
                   <div className="text-3xl mb-2">🔍</div>
-                  <p className="text-sm">{isEN ? "Start typing to search..." : "Aramak için yazmaya başlayın..."}</p>
+                  <p className="text-sm">{t("searchPlaceholder")}</p>
                 </div>
               )}
 
               {showEmpty && (
                 <div className="px-4 py-8 text-center text-gray-600">
                   <div className="text-3xl mb-2">😔</div>
-                  <p className="text-sm">{isEN ? `No results for "${query}"` : `"${query}" için sonuç bulunamadı`}</p>
+                  <p className="text-sm">{t("searchNoResults", { q: query })}</p>
                 </div>
               )}
 
               {filteredPets.length > 0 && (
                 <div className="p-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-1.5">
-                    {isEN ? "Pets" : "Hayvanlar"} ({filteredPets.length})
+                    {t("searchPets")} ({filteredPets.length})
                   </p>
                   {filteredPets.map((pet) => {
                     const avatarColor = getAvatarColor(pet.name);
-                    const emoji = pet.type === "Kedi" || pet.type === "Cat" ? "🐱" : pet.type === "Köpek" || pet.type === "Dog" ? "🐶" : "🐾";
+                    const emoji = petTypeEmoji(pet.type);
                     return (
                       <motion.button
                         key={pet.id}
@@ -174,7 +180,7 @@ function GlobalSearch({ isOpen, onClose }) {
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-100 truncate">{pet.name} {emoji}</p>
-                          <p className="text-xs text-gray-500 truncate">{pet.type}{pet.breed ? ` · ${pet.breed}` : ""}</p>
+                          <p className="text-xs text-gray-500 truncate">{petTypeLabel(pet.type, isEN)}{pet.breed ? ` · ${pet.breed}` : ""}</p>
                         </div>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-600 flex-shrink-0">
                           <polyline points="9 18 15 12 9 6"/>
@@ -188,7 +194,7 @@ function GlobalSearch({ isOpen, onClose }) {
               {filteredRecords.length > 0 && (
                 <div className="p-2 border-t border-gray-800">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-1.5">
-                    {isEN ? "Records" : "Kayıtlar"} ({filteredRecords.length})
+                    {t("searchRecords")} ({filteredRecords.length})
                   </p>
                   {filteredRecords.map((record) => {
                     const avatar = getPetAvatar(record.petId);
@@ -204,7 +210,7 @@ function GlobalSearch({ isOpen, onClose }) {
                           {RECORD_ICONS[record.type] || "📋"}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-100 truncate">{record.type}</p>
+                          <p className="text-sm font-medium text-gray-100 truncate">{recordTypeLabel(record.type, isEN)}</p>
                           <p className="text-xs text-gray-500 truncate">
                             {getPetName(record.petId)} · {formatDate(record.date)}
                           </p>
@@ -223,8 +229,8 @@ function GlobalSearch({ isOpen, onClose }) {
 
             {/* Footer */}
             <div className="px-4 py-2.5 border-t border-gray-800 flex items-center gap-4">
-              <span className="text-xs text-gray-600">{isEN ? "Press" : "Basın"} <kbd className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-xs">↵</kbd> {isEN ? "to select" : "seçmek için"}</span>
-              <span className="text-xs text-gray-600">{isEN ? "Press" : "Basın"} <kbd className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-xs">ESC</kbd> {isEN ? "to close" : "kapatmak için"}</span>
+              <span className="text-xs text-gray-600">{t("searchPressEnter")} <kbd className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-xs">↵</kbd> {t("searchToSelect")}</span>
+              <span className="text-xs text-gray-600">{t("searchPressEnter")} <kbd className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-xs">ESC</kbd> {t("searchToClose")}</span>
             </div>
           </motion.div>
         </div>

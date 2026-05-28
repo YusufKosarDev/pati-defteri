@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -9,25 +9,26 @@ import Button from "../UI/Button";
 import Modal from "../UI/Modal";
 import ConfirmModal from "../UI/ConfirmModal";
 import RecordForm from "./RecordForm";
+import { recordTypeLabel, type RecordTypeKey } from "../../utils/recordTypes";
+import type { PetRecord } from "../../types";
 
-const RECORD_ICONS = {
-  "Karma Aşı": { icon: "💉", color: "bg-blue-500/10" },
-  "Kuduz Aşısı": { icon: "🛡️", color: "bg-red-500/10" },
-  "Parazit Damlası": { icon: "💧", color: "bg-cyan-500/10" },
-  "Pire İlacı": { icon: "🪲", color: "bg-orange-500/10" },
-  "Kurtluk İlacı": { icon: "🪱", color: "bg-yellow-500/10" },
-  "Veteriner Ziyareti": { icon: "🏥", color: "bg-emerald-500/10" },
-  "Diğer": { icon: "📋", color: "bg-gray-500/10" },
-  "Mixed Vaccine": { icon: "💉", color: "bg-blue-500/10" },
-  "Rabies Vaccine": { icon: "🛡️", color: "bg-red-500/10" },
-  "Parasite Drop": { icon: "💧", color: "bg-cyan-500/10" },
-  "Flea Medicine": { icon: "🪲", color: "bg-orange-500/10" },
-  "Dewormer": { icon: "🪱", color: "bg-yellow-500/10" },
-  "Vet Visit": { icon: "🏥", color: "bg-emerald-500/10" },
-  "Other": { icon: "📋", color: "bg-gray-500/10" },
+const RECORD_ICONS: Record<RecordTypeKey, { icon: string; color: string }> = {
+  mixed_vaccine: { icon: "💉", color: "bg-blue-500/10" },
+  rabies: { icon: "🛡️", color: "bg-red-500/10" },
+  parasite_drop: { icon: "💧", color: "bg-cyan-500/10" },
+  flea: { icon: "🪲", color: "bg-orange-500/10" },
+  dewormer: { icon: "🪱", color: "bg-yellow-500/10" },
+  vet_visit: { icon: "🏥", color: "bg-emerald-500/10" },
+  other: { icon: "📋", color: "bg-gray-500/10" },
 };
 
-function RecordCard({ record, index = 0, sortable = true }) {
+type RecordCardProps = {
+  record: PetRecord;
+  index?: number;
+  sortable?: boolean;
+};
+
+function RecordCard({ record, index = 0, sortable = true }: RecordCardProps) {
   const { deleteRecord } = usePet();
   const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
@@ -38,7 +39,7 @@ function RecordCard({ record, index = 0, sortable = true }) {
     attributes, listeners, setNodeRef, transform, transition, isDragging,
   } = useSortable({ id: record.id, disabled: !sortable });
 
-  const style = {
+  const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
@@ -48,13 +49,14 @@ function RecordCard({ record, index = 0, sortable = true }) {
   const daysUntil = record.nextDate ? getDaysUntil(record.nextDate) : null;
   const overdue = record.nextDate ? isOverdue(record.nextDate) : false;
   const upcoming = record.nextDate ? isUpcoming(record.nextDate) : false;
-  const recordStyle = RECORD_ICONS[record.type] || RECORD_ICONS["Diğer"];
+  const recordStyle = RECORD_ICONS[record.type] || RECORD_ICONS.other;
+  const typeLabel = recordTypeLabel(record.type, isEN);
 
   const getBadge = () => {
     if (!record.nextDate) return null;
     if (overdue) return (
       <span className="text-xs bg-red-500/10 text-red-400 px-2 py-1 rounded-full font-medium">
-        ⚠️ {Math.abs(daysUntil)} {t("daysPast")}
+        ⚠️ {Math.abs(daysUntil ?? 0)} {t("daysPast")}
       </span>
     );
     if (upcoming) return (
@@ -89,7 +91,7 @@ function RecordCard({ record, index = 0, sortable = true }) {
                 {...attributes}
                 {...listeners}
                 className="text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing text-lg select-none"
-                aria-label={isEN ? "Drag to reorder" : "Sıralamak için sürükle"}
+                aria-label={t("searchDragReorder")}
               >
                 ⠿
               </span>
@@ -97,7 +99,7 @@ function RecordCard({ record, index = 0, sortable = true }) {
             <div className={`w-9 h-9 ${recordStyle.color} rounded-xl flex items-center justify-center text-lg flex-shrink-0`}>
               {recordStyle.icon}
             </div>
-            <h4 className="font-bold text-gray-100">{record.type}</h4>
+            <h4 className="font-bold text-gray-100">{typeLabel}</h4>
           </div>
           {getBadge()}
         </div>
@@ -126,8 +128,8 @@ function RecordCard({ record, index = 0, sortable = true }) {
         isOpen={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={() => deleteRecord(record.id)}
-        title={isEN ? `Delete ${record.type}?` : `${record.type} silinsin mi?`}
-        desc={isEN ? "This record will be permanently deleted!" : "Bu kayıt kalıcı olarak silinecek!"}
+        title={`${typeLabel} — ${t("delete")}?`}
+        desc={t("vetDeleteConfirmDesc")}
         confirmText={t("delete")}
       />
     </>

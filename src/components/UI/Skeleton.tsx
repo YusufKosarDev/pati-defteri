@@ -1,7 +1,5 @@
-function SkeletonBox({ className = "" }) {
-  return (
-    <div className={`animate-pulse bg-gray-800 rounded-2xl ${className}`} />
-  );
+function SkeletonBox({ className = "" }: { className?: string }) {
+  return <div className={`animate-pulse bg-gray-800 rounded-2xl ${className}`} />;
 }
 
 function PetCardSkeleton() {

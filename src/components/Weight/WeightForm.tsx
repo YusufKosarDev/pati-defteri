@@ -1,19 +1,20 @@
-import { useState } from "react";
+import { useId, useState, type ChangeEvent, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { usePet } from "../../hooks/usePet";
 import Button from "../UI/Button";
+import type { Id } from "../../../convex/_generated/dataModel";
 
-function WeightForm({ petId, onClose }) {
+function WeightForm({ petId, onClose }: { petId: Id<"pets">; onClose: () => void }) {
   const { addWeight } = usePet();
-  const { i18n } = useTranslation();
-  const isEN = i18n.language === "en";
+  const { t } = useTranslation();
+  const fid = useId();
   const [form, setForm] = useState({ weight: "", date: "", notes: "" });
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.weight || !form.date) return;
     try {
@@ -30,8 +31,9 @@ function WeightForm({ petId, onClose }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
-        <label className={labelClass}>{isEN ? "Weight (kg)" : "Ağırlık (kg)"} *</label>
+        <label htmlFor={`${fid}-weight`} className={labelClass}>{t("weightKg")} *</label>
         <input
+          id={`${fid}-weight`}
           name="weight"
           type="number"
           step="0.1"
@@ -39,14 +41,15 @@ function WeightForm({ petId, onClose }) {
           value={form.weight}
           onChange={handleChange}
           className={inputClass}
-          placeholder={isEN ? "e.g. 4.5" : "Örn: 4.5"}
+          placeholder={t("weightKgPlaceholder")}
           required
         />
       </div>
 
       <div>
-        <label className={labelClass}>{isEN ? "Date" : "Tarih"} *</label>
+        <label htmlFor={`${fid}-date`} className={labelClass}>{t("weightDate")} *</label>
         <input
+          id={`${fid}-date`}
           name="date"
           type="date"
           value={form.date}
@@ -57,20 +60,21 @@ function WeightForm({ petId, onClose }) {
       </div>
 
       <div>
-        <label className={labelClass}>{isEN ? "Notes" : "Notlar"}</label>
+        <label htmlFor={`${fid}-notes`} className={labelClass}>{t("weightNotes")}</label>
         <textarea
+          id={`${fid}-notes`}
           name="notes"
           value={form.notes}
           onChange={handleChange}
           className={inputClass}
           rows={2}
-          placeholder={isEN ? "Additional info..." : "Ek bilgi..."}
+          placeholder={t("weightNotesPlaceholder")}
         />
       </div>
 
       <div className="flex gap-2 justify-end mt-2">
-        <Button variant="secondary" onClick={onClose}>{isEN ? "Cancel" : "İptal"}</Button>
-        <Button type="submit">{isEN ? "Save" : "Kaydet"}</Button>
+        <Button variant="secondary" onClick={onClose}>{t("cancel")}</Button>
+        <Button type="submit">{t("save")}</Button>
       </div>
     </form>
   );

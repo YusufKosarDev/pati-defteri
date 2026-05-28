@@ -8,6 +8,7 @@ import Modal from "../UI/Modal";
 import PetForm from "./PetForm";
 import Button from "../UI/Button";
 import EmptyState from "../UI/EmptyState";
+import type { Pet } from "../../types";
 
 const SORT_OPTIONS = {
   tr: [
@@ -28,7 +29,7 @@ const SORT_OPTIONS = {
   ],
 };
 
-function PetList({ onSelectPet }) {
+function PetList({ onSelectPet }: { onSelectPet: (pet: Pet) => void }) {
   const { pets, getRecordsByPet } = usePet();
   const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
@@ -38,8 +39,8 @@ function PetList({ onSelectPet }) {
 
   const sortOptions = isEN ? SORT_OPTIONS.en : SORT_OPTIONS.tr;
 
-  const getSortedPets = () => {
-    let filtered = pets.filter((pet) =>
+  const getSortedPets = (): Pet[] => {
+    const filtered = pets.filter((pet) =>
       pet.name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -52,13 +53,13 @@ function PetList({ onSelectPet }) {
         return filtered.sort((a, b) => {
           if (!a.birthDate) return 1;
           if (!b.birthDate) return -1;
-          return new Date(b.birthDate) - new Date(a.birthDate);
+          return new Date(b.birthDate).getTime() - new Date(a.birthDate).getTime();
         });
       case "age_desc":
         return filtered.sort((a, b) => {
           if (!a.birthDate) return 1;
           if (!b.birthDate) return -1;
-          return new Date(a.birthDate) - new Date(b.birthDate);
+          return new Date(a.birthDate).getTime() - new Date(b.birthDate).getTime();
         });
       case "records_desc":
         return filtered.sort((a, b) => {
@@ -68,7 +69,7 @@ function PetList({ onSelectPet }) {
         });
       case "urgent":
         return filtered.sort((a, b) => {
-          const getUrgency = (pet) => {
+          const getUrgency = (pet: Pet) => {
             const petRecords = getRecordsByPet(pet.id);
             const overdue = petRecords.filter((r) => r.nextDate && isOverdue(r.nextDate)).length;
             const upcoming = petRecords.filter((r) => r.nextDate && isUpcoming(r.nextDate)).length;
@@ -112,7 +113,7 @@ function PetList({ onSelectPet }) {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            aria-label={isEN ? "Sort by" : "Sıralama"}
+            aria-label={t("petsToggle")}
             className="bg-gray-800 border border-gray-700 text-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
           >
             {sortOptions.map((opt) => (

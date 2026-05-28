@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import type { ReactNode } from "react";
 
 function NoPetsIllustration() {
   return (
@@ -70,8 +71,15 @@ function NoVetIllustration() {
   );
 }
 
-function EmptyState({ type = "pets", title, desc, action }) {
-  const illustrations = {
+type EmptyStateProps = {
+  type?: "pets" | "records" | "weight" | "vet";
+  title?: string;
+  desc?: string;
+  action?: ReactNode;
+};
+
+function EmptyState({ type = "pets", title, desc, action }: EmptyStateProps) {
+  const illustrations: Record<NonNullable<EmptyStateProps["type"]>, ReactNode> = {
     pets: <NoPetsIllustration />,
     records: <NoRecordsIllustration />,
     weight: <NoWeightIllustration />,

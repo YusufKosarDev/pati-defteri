@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import { captureException } from "../../lib/sentry";
 
 function getLang() {
@@ -9,17 +9,20 @@ function getLang() {
   }
 }
 
-class ErrorBoundary extends Component {
-  constructor(props) {
+type Props = { children: ReactNode };
+type State = { hasError: boolean; error: Error | null };
+
+class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     captureException(error, { componentStack: errorInfo?.componentStack });
   }
 

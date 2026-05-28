@@ -3,24 +3,33 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { QRCodeSVG } from "qrcode.react";
 import { calculateAge } from "../../utils/dateHelpers";
+import { recordTypeLabel } from "../../utils/recordTypes";
+import { petTypeLabel } from "../../utils/petType";
 import { usePet } from "../../hooks/usePet";
+import type { Pet, Vet } from "../../types";
 
-function QRModal({ isOpen, onClose, pet }) {
+type QRModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  pet: Pet | null;
+};
+
+function QRModal({ isOpen, onClose, pet }: QRModalProps) {
   const { getRecordsByPet } = usePet();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
-  const qrRef = useRef(null);
+  const qrRef = useRef<HTMLDivElement>(null);
 
   if (!pet) return null;
 
   const records = getRecordsByPet(pet.id);
   const age = calculateAge(pet.birthDate);
 
-  const vets = pet.vets || (pet.vet && (pet.vet.clinicName || pet.vet.doctorName || pet.vet.phone) ? [pet.vet] : []);
+  const vets: Vet[] = pet.vets || (pet.vet && (pet.vet.clinicName || pet.vet.doctorName || pet.vet.phone) ? [pet.vet] : []);
 
   const qrData = JSON.stringify({
     name: pet.name,
-    type: pet.type,
+    type: petTypeLabel(pet.type, isEN),
     breed: pet.breed || "",
     birthDate: pet.birthDate || "",
     age: age || "",
@@ -30,7 +39,7 @@ function QRModal({ isOpen, onClose, pet }) {
       phone: v.phone || "",
     })),
     records: records.slice(0, 5).map((r) => ({
-      type: r.type,
+      type: recordTypeLabel(r.type, isEN),
       date: r.date,
       nextDate: r.nextDate || "",
     })),
@@ -42,6 +51,7 @@ function QRModal({ isOpen, onClose, pet }) {
 
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     const svgData = new XMLSerializer().serializeToString(svg);
     const img = new Image();
     const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
@@ -100,7 +110,7 @@ function QRModal({ isOpen, onClose, pet }) {
               )}
               <div>
                 <h3 className="font-bold text-gray-100 text-lg">{pet.name}</h3>
-                <p className="text-xs text-gray-500">{pet.type}{pet.breed ? ` · ${pet.breed}` : ""}{age ? ` · ${age}` : ""}</p>
+                <p className="text-xs text-gray-500">{petTypeLabel(pet.type, isEN)}{pet.breed ? ` · ${pet.breed}` : ""}{age ? ` · ${age}` : ""}</p>
               </div>
             </div>
 
@@ -123,10 +133,10 @@ function QRModal({ isOpen, onClose, pet }) {
             {/* Bilgi özeti */}
             <div className="bg-gray-800 rounded-xl p-3 mb-4 text-left">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                {isEN ? "Contains" : "İçerik"}
+                {t("qrContains")}
               </p>
               <div className="flex flex-col gap-1">
-                <p className="text-xs text-gray-300">🐾 {isEN ? "Pet info" : "Hayvan bilgisi"}</p>
+                <p className="text-xs text-gray-300">🐾 {t("qrPetInfo")}</p>
                 {vets.length > 0 && (
                   <p className="text-xs text-gray-300">
                     🏥 {vets.length === 1 && vets[0].clinicName
@@ -148,13 +158,13 @@ function QRModal({ isOpen, onClose, pet }) {
                 onClick={handleDownload}
                 className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-colors"
               >
-                ⬇️ {isEN ? "Download" : "İndir"}
+                ⬇️ {t("qrDownload")}
               </button>
               <button
                 onClick={onClose}
                 className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-colors"
               >
-                {isEN ? "Close" : "Kapat"}
+                {t("qrClose")}
               </button>
             </div>
           </motion.div>

@@ -3,10 +3,12 @@ import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 import { usePet } from "../../hooks/usePet";
 import Button from "./Button";
+import { captureException } from "../../lib/sentry";
+import type { Pet } from "../../types";
 
-function ExportButton({ pet }) {
+function ExportButton({ pet }: { pet: Pet }) {
   const { getRecordsByPet, getWeightsByPet } = usePet();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
   const [loading, setLoading] = useState(false);
 
@@ -22,8 +24,8 @@ function ExportButton({ pet }) {
         isEN,
       });
     } catch (err) {
-      console.error(err);
-      toast.error(isEN ? "Could not generate PDF." : "PDF oluşturulamadı.");
+      captureException(err);
+      toast.error(t("exportPdfFailed"));
     } finally {
       setLoading(false);
     }
@@ -31,9 +33,7 @@ function ExportButton({ pet }) {
 
   return (
     <Button variant="outline" onClick={handleExport} disabled={loading}>
-      {loading
-        ? (isEN ? "⏳ Generating..." : "⏳ Hazırlanıyor...")
-        : `📄 ${isEN ? "Download PDF" : "PDF İndir"}`}
+      {loading ? t("exportPdfGenerating") : t("pdfDownload")}
     </Button>
   );
 }

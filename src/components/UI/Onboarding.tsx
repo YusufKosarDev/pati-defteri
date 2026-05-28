@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import useLocalStorage from "../../hooks/useLocalStorage";
 
-function Onboarding({ onFinish }) {
+function Onboarding({ onFinish }: { onFinish: () => void }) {
   const [step, setStep] = useState(0);
   const { t } = useTranslation();
 
@@ -129,7 +129,7 @@ function Onboarding({ onFinish }) {
   );
 }
 
-function OnboardingWrapper({ children }) {
+function OnboardingWrapper({ children }: { children: ReactNode }) {
   const [seen, setSeen] = useLocalStorage("onboarding_seen", false);
 
   if (!seen) {

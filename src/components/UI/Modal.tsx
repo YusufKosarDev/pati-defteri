@@ -1,13 +1,19 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import useModalA11y from "../../hooks/useModalA11y";
 
-function Modal({ isOpen, onClose, title, children }) {
+type ModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  title: ReactNode;
+  children: ReactNode;
+};
+
+function Modal({ isOpen, onClose, title, children }: ModalProps) {
   const dialogRef = useModalA11y(isOpen, onClose);
   const titleId = useId();
-  const { i18n } = useTranslation();
-  const isEN = i18n.language === "en";
+  const { t } = useTranslation();
 
   return (
     <AnimatePresence>
@@ -36,7 +42,7 @@ function Modal({ isOpen, onClose, title, children }) {
               <h2 id={titleId} className="text-xl font-bold text-gray-100">{title}</h2>
               <button
                 onClick={onClose}
-                aria-label={isEN ? "Close" : "Kapat"}
+                aria-label={t("modalClose")}
                 className="text-gray-400 hover:text-gray-200 text-2xl font-bold cursor-pointer"
               >
                 ×
