@@ -4,13 +4,18 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend, AreaChart, Area,
 } from "recharts";
+import { type ReactNode } from "react";
 import { usePet } from "../hooks/usePet";
 import { isOverdue, isUpcoming } from "../utils/dateHelpers";
+import { recordTypeLabel, type RecordTypeKey } from "../utils/recordTypes";
 import usePageTitle from "../hooks/usePageTitle";
 
 const COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899", "#f97316"];
 
-function CustomTooltip({ active, payload, label }) {
+type TooltipEntry = { dataKey?: string | number; name?: string; value?: number | string; color?: string };
+type TooltipProps = { active?: boolean; payload?: TooltipEntry[]; label?: string | number };
+
+function CustomTooltip({ active, payload, label }: TooltipProps) {
   if (active && payload && payload.length) {
     return (
       <div className="bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-xs">
@@ -26,7 +31,7 @@ function CustomTooltip({ active, payload, label }) {
   return null;
 }
 
-function ChartCard({ title, children, delay = 0 }) {
+function ChartCard({ title, children, delay = 0 }: { title: ReactNode; children: ReactNode; delay?: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -42,14 +47,14 @@ function ChartCard({ title, children, delay = 0 }) {
 
 function StatsPage() {
   const { pets, records, weights } = usePet();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
 
-  usePageTitle(isEN ? "Statistics" : "İstatistikler");
+  usePageTitle(t("statsTitle"));
 
   // Aylık kayıt verisi (son 12 ay)
   const monthlyData = () => {
-    const months = [];
+    const months: { month: string; count: number }[] = [];
     const now = new Date();
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -63,14 +68,14 @@ function StatsPage() {
     return months;
   };
 
-  // Kayıt türü dağılımı
+  // Kayıt türü dağılımı (anahtara göre grupla, görüntülemede etiketi göster)
   const typeData = () => {
-    const types = {};
+    const types: Record<string, number> = {};
     records.forEach((r) => {
       types[r.type] = (types[r.type] || 0) + 1;
     });
     return Object.entries(types)
-      .map(([name, value]) => ({ name, value }))
+      .map(([key, value]) => ({ key, name: recordTypeLabel(key as RecordTypeKey, isEN), value }))
       .sort((a, b) => b.value - a.value);
   };
 
@@ -89,7 +94,7 @@ function StatsPage() {
     if (weights.length === 0) return [];
     const allDates = [...new Set(weights.map((w) => w.date))].sort();
     return allDates.slice(-12).map((date) => {
-      const entry = {
+      const entry: Record<string, string | number> = {
         date: new Date(date).toLocaleDateString(isEN ? "en-US" : "tr-TR", { month: "short", day: "numeric" }),
       };
       pets.forEach((pet) => {
@@ -102,39 +107,24 @@ function StatsPage() {
 
   // Özet istatistikler
   const summaryStats = [
-    {
-      icon: "🐾",
-      label: isEN ? "Total Pets" : "Toplam Hayvan",
-      value: pets.length,
-      color: "bg-emerald-500/10 text-emerald-400",
-    },
-    {
-      icon: "💉",
-      label: isEN ? "Total Records" : "Toplam Kayıt",
-      value: records.length,
-      color: "bg-blue-500/10 text-blue-400",
-    },
+    { icon: "🐾", label: t("statsTotalPets"), value: pets.length, color: "bg-emerald-500/10 text-emerald-400" },
+    { icon: "💉", label: t("statsTotalRecords"), value: records.length, color: "bg-blue-500/10 text-blue-400" },
     {
       icon: "⚠️",
-      label: isEN ? "Overdue" : "Gecikmiş",
+      label: t("statsOverdue"),
       value: records.filter((r) => r.nextDate && isOverdue(r.nextDate)).length,
       color: "bg-red-500/10 text-red-400",
     },
     {
       icon: "⏰",
-      label: isEN ? "Upcoming (30d)" : "Yaklaşan (30g)",
+      label: t("statsUpcoming30"),
       value: records.filter((r) => r.nextDate && isUpcoming(r.nextDate)).length,
       color: "bg-yellow-500/10 text-yellow-400",
     },
-    {
-      icon: "⚖️",
-      label: isEN ? "Weight Records" : "Ağırlık Kaydı",
-      value: weights.length,
-      color: "bg-violet-500/10 text-violet-400",
-    },
+    { icon: "⚖️", label: t("statsWeightRecords"), value: weights.length, color: "bg-violet-500/10 text-violet-400" },
     {
       icon: "📅",
-      label: isEN ? "This Month" : "Bu Ay",
+      label: t("statsThisMonth"),
       value: records.filter((r) => {
         const d = new Date(r.date);
         const now = new Date();
@@ -149,9 +139,7 @@ function StatsPage() {
       <div className="min-h-screen bg-gray-950">
         <div className="max-w-5xl mx-auto px-6 py-8 text-center">
           <div className="text-6xl mb-4">📊</div>
-          <p className="text-gray-400 text-lg font-medium">
-            {isEN ? "No data yet. Add pets and records to see statistics." : "Henüz veri yok. İstatistikleri görmek için hayvan ve kayıt ekleyin."}
-          </p>
+          <p className="text-gray-400 text-lg font-medium">{t("statsEmpty")}</p>
         </div>
       </div>
     );
@@ -160,18 +148,11 @@ function StatsPage() {
   return (
     <div className="min-h-screen bg-gray-950">
       <div className="max-w-5xl mx-auto px-6 py-8">
-
-        {/* Başlık */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-100">
-            📊 {isEN ? "Statistics" : "İstatistikler"}
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">
-            {isEN ? "Overview of all your pet care data." : "Tüm evcil hayvan bakım verilerinizin özeti."}
-          </p>
+          <h1 className="text-2xl font-bold text-gray-100">{t("statsTitle")}</h1>
+          <p className="text-gray-500 text-sm mt-1">{t("statsSubtitle")}</p>
         </motion.div>
 
-        {/* Özet Kartlar */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
           {summaryStats.map((s, i) => (
             <motion.div
@@ -190,11 +171,8 @@ function StatsPage() {
           ))}
         </div>
 
-        {/* Grafikler */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-          {/* Aylık Kayıt Grafiği */}
-          <ChartCard title={isEN ? "📈 Monthly Records (Last 12 Months)" : "📈 Aylık Kayıtlar (Son 12 Ay)"} delay={0.1}>
+          <ChartCard title={t("statsMonthlyTitle")} delay={0.1}>
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthlyData()} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
@@ -211,7 +189,7 @@ function StatsPage() {
                   <Area
                     type="monotone"
                     dataKey="count"
-                    name={isEN ? "Records" : "Kayıt"}
+                    name={t("statsRecords")}
                     stroke="#10b981"
                     strokeWidth={2}
                     fill="url(#emeraldGradient)"
@@ -223,8 +201,7 @@ function StatsPage() {
             </div>
           </ChartCard>
 
-          {/* Kayıt Türü Dağılımı */}
-          <ChartCard title={isEN ? "🥧 Record Type Distribution" : "🥧 Kayıt Türü Dağılımı"} delay={0.15}>
+          <ChartCard title={t("statsTypeDistTitle")} delay={0.15}>
             <div className="h-56 flex items-center gap-4">
               <ResponsiveContainer width="55%" height="100%">
                 <PieChart>
@@ -238,7 +215,7 @@ function StatsPage() {
                     dataKey="value"
                   >
                     {typeData().map((entry, i) => (
-                      <Cell key={entry.name} fill={COLORS[i % COLORS.length]} />
+                      <Cell key={entry.key} fill={COLORS[i % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
@@ -246,7 +223,7 @@ function StatsPage() {
               </ResponsiveContainer>
               <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto max-h-48">
                 {typeData().map((item, i) => (
-                  <div key={item.name} className="flex items-center gap-2 text-xs">
+                  <div key={item.key} className="flex items-center gap-2 text-xs">
                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                     <span className="text-gray-300 truncate flex-1">{item.name}</span>
                     <span className="text-gray-500 font-medium">{item.value}</span>
@@ -256,8 +233,7 @@ function StatsPage() {
             </div>
           </ChartCard>
 
-          {/* Hayvana Göre Kayıt */}
-          <ChartCard title={isEN ? "🐾 Records Per Pet" : "🐾 Hayvana Göre Kayıt"} delay={0.2}>
+          <ChartCard title={t("statsRecordsPerPet")} delay={0.2}>
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={petRecordsData()} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
@@ -266,16 +242,15 @@ function StatsPage() {
                   <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend wrapperStyle={{ fontSize: "11px", color: "#9ca3af" }} />
-                  <Bar dataKey="records" name={isEN ? "Total" : "Toplam"} fill="#10b981" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="overdue" name={isEN ? "Overdue" : "Gecikmiş"} fill="#ef4444" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="upcoming" name={isEN ? "Upcoming" : "Yaklaşan"} fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="records" name={t("statsTotal")} fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="overdue" name={t("statsOverdue")} fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="upcoming" name={t("homeUpcoming")} fill="#f59e0b" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </ChartCard>
 
-          {/* Ağırlık Trendi */}
-          <ChartCard title={isEN ? "⚖️ Weight Trend" : "⚖️ Ağırlık Trendi"} delay={0.25}>
+          <ChartCard title={t("statsWeightTrend")} delay={0.25}>
             <div className="h-56">
               {weights.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -301,12 +276,11 @@ function StatsPage() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-600 text-sm">
-                  {isEN ? "No weight records yet." : "Henüz ağırlık kaydı yok."}
+                  {t("statsNoWeightYet")}
                 </div>
               )}
             </div>
           </ChartCard>
-
         </div>
       </div>
     </div>

@@ -7,9 +7,9 @@ import { ConvexAuthProvider } from '@convex-dev/auth/react'
 import { convex, isConvexConfigured } from './lib/convex'
 import './index.css'
 import './i18n/index.js'
-import App from './App.jsx'
-import ErrorBoundary from './components/UI/ErrorBoundary.jsx'
-import ConfigError from './components/UI/ConfigError.jsx'
+import App from './App'
+import ErrorBoundary from './components/UI/ErrorBoundary'
+import ConfigError from './components/UI/ConfigError'
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -17,9 +17,9 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-const root = createRoot(document.getElementById('root'));
+const root = createRoot(document.getElementById('root')!);
 
-if (!isConvexConfigured) {
+if (!isConvexConfigured || !convex) {
   root.render(
     <StrictMode>
       <ConfigError />

@@ -5,8 +5,7 @@ import usePageTitle from "../hooks/usePageTitle";
 
 function NotFoundPage() {
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
-  const isEN = i18n.language === "en";
+  const { t } = useTranslation();
 
   usePageTitle("404");
 
@@ -41,7 +40,7 @@ function NotFoundPage() {
           transition={{ delay: 0.3 }}
           className="text-2xl font-bold text-gray-100 mb-3"
         >
-          {isEN ? "Looks like you're lost! 🔍" : "Kaybolmuş gibi görünüyor! 🔍"}
+          {t("notFoundLost")}
         </motion.h2>
 
         <motion.p
@@ -50,9 +49,7 @@ function NotFoundPage() {
           transition={{ delay: 0.4 }}
           className="text-gray-500 mb-8 leading-relaxed"
         >
-          {isEN
-            ? "The page you're looking for was not found. Maybe a cat ran off with it. 🐱"
-            : "Aradığınız sayfa bulunamadı. Belki bir kedi kaçırdı onu. 🐱"}
+          {t("notFoundDesc")}
         </motion.p>
 
         <motion.div
@@ -65,13 +62,13 @@ function NotFoundPage() {
             onClick={() => navigate("/")}
             className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-medium transition-all hover:scale-105 cursor-pointer"
           >
-            {isEN ? "🏠 Back to Home" : "🏠 Ana Sayfaya Dön"}
+            {t("notFoundBack")}
           </button>
           <button
             onClick={() => navigate("/app")}
             className="bg-gray-900 border border-gray-800 text-gray-300 hover:bg-gray-800 px-6 py-3 rounded-2xl font-medium transition-colors cursor-pointer"
           >
-            {isEN ? "🐾 Go to Pets" : "🐾 Hayvanlara Git"}
+            {t("notFoundPets")}
           </button>
         </motion.div>
 

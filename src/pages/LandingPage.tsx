@@ -5,15 +5,15 @@ import { useTranslation } from "react-i18next";
 import { usePet } from "../hooks/usePet";
 import usePageTitle from "../hooks/usePageTitle";
 
-function useScrollAnimation(amount = 0.2) {
-  const ref = useRef(null);
+function useScrollAnimation(amount = 0.2): [React.RefObject<HTMLDivElement | null>, boolean] {
+  const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount });
   return [ref, isInView];
 }
 
-function AnimatedCounter({ target, duration = 2000, suffix = "" }) {
+function AnimatedCounter({ target, duration = 2000, suffix = "" }: { target: number; duration?: number; suffix?: string }) {
   const [count, setCount] = useState(0);
-  const ref = useRef(null);
+  const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.5 });
 
   useEffect(() => {
@@ -35,7 +35,7 @@ function AnimatedCounter({ target, duration = 2000, suffix = "" }) {
   return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 }
 
-const PatiLogo = ({ size = 24, color = "white" }) => (
+const PatiLogo = ({ size = 24, color = "white" }: { size?: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 100 100" fill={color}>
     <ellipse cx="20" cy="30" rx="10" ry="13"/>
     <ellipse cx="42" cy="20" rx="10" ry="13"/>

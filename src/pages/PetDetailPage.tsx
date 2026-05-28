@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { formatDate, calculateAge, getAvatarGradient } from "../utils/dateHelpers";
+import { petTypeEmoji, petTypeLabel } from "../utils/petType";
 import RecordList from "../components/Record/RecordList";
 import WeightSection from "../components/Weight/WeightSection";
 import VetCard from "../components/Vet/VetCard";
@@ -9,23 +10,32 @@ import Button from "../components/UI/Button";
 import ExportButton from "../components/UI/ExportButton";
 import QRModal from "../components/UI/QRModal";
 import usePageTitle from "../hooks/usePageTitle";
+import type { Pet } from "../types";
 
 const tabs = [
   { key: "records", icon: "💉", labelKey: "recordsTitle" },
   { key: "weight", icon: "⚖️", labelKey: "weightTitle" },
   { key: "vet", icon: "🏥", labelKey: "vetTitle" },
-];
+] as const;
 
-function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }) {
+type PetDetailPageProps = {
+  pet: Pet;
+  onBack: () => void;
+  initialTab?: string;
+  onTabChange?: (tab: string) => void;
+};
+
+function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }: PetDetailPageProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [qrOpen, setQrOpen] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEN = i18n.language === "en";
 
   usePageTitle(pet?.name);
 
   const age = calculateAge(pet.birthDate);
   const gradient = getAvatarGradient(pet.name);
-  const emoji = pet.type === "Kedi" || pet.type === "Cat" ? "🐱" : pet.type === "Köpek" || pet.type === "Dog" ? "🐶" : "🐾";
+  const emoji = petTypeEmoji(pet.type);
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
@@ -65,7 +75,7 @@ function PetDetailPage({ pet, onBack, initialTab = "records", onTabChange }) {
             </div>
             <div className="flex flex-wrap gap-2">
               <span className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded-lg">
-                {pet.type}{pet.breed ? ` · ${pet.breed}` : ""}
+                {petTypeLabel(pet.type, isEN)}{pet.breed ? ` · ${pet.breed}` : ""}
               </span>
               {age && (
                 <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-lg font-medium">{age}</span>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../hooks/useAuth";
@@ -6,7 +6,7 @@ import usePageTitle from "../hooks/usePageTitle";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 
-const PatiLogo = ({ size = 24 }) => (
+const PatiLogo = ({ size = 24 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 100 100" fill="white">
     <ellipse cx="20" cy="30" rx="10" ry="13"/>
     <ellipse cx="42" cy="20" rx="10" ry="13"/>
@@ -16,15 +16,16 @@ const PatiLogo = ({ size = 24 }) => (
   </svg>
 );
 
+type AuthMode = "login" | "register";
+
 function AuthPage() {
   const navigate = useNavigate();
   const { register, login, loginAsGuest } = useAuth();
-  const { i18n } = useTranslation();
-  const isEN = i18n.language === "en";
-  const [mode, setMode] = useState("login");
+  const { t } = useTranslation();
+  const [mode, setMode] = useState<AuthMode>("login");
   const [loading, setLoading] = useState(false);
 
-  usePageTitle(mode === "login" ? (isEN ? "Login" : "Giriş Yap") : (isEN ? "Register" : "Kayıt Ol"));
+  usePageTitle(mode === "login" ? t("authLogin") : t("authRegister"));
 
   const [form, setForm] = useState({
     name: "",
@@ -33,35 +34,35 @@ function AuthPage() {
     confirmPassword: "",
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: "" });
   };
 
-  const validate = () => {
-    const newErrors = {};
+  const validate = (): Record<string, string> => {
+    const newErrors: Record<string, string> = {};
     if (mode === "register" && !form.name.trim()) {
-      newErrors.name = isEN ? "Name is required." : "İsim zorunlu.";
+      newErrors.name = t("authNameRequired");
     }
     if (!form.email.trim()) {
-      newErrors.email = isEN ? "Email is required." : "E-posta zorunlu.";
+      newErrors.email = t("authEmailRequired");
     } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-      newErrors.email = isEN ? "Enter a valid email." : "Geçerli bir e-posta girin.";
+      newErrors.email = t("authEmailInvalid");
     }
     if (!form.password) {
-      newErrors.password = isEN ? "Password is required." : "Şifre zorunlu.";
+      newErrors.password = t("authPasswordRequired");
     } else if (form.password.length < 6) {
-      newErrors.password = isEN ? "Password must be at least 6 characters." : "Şifre en az 6 karakter olmalı.";
+      newErrors.password = t("authPasswordTooShort");
     }
     if (mode === "register" && form.password !== form.confirmPassword) {
-      newErrors.confirmPassword = isEN ? "Passwords don't match." : "Şifreler eşleşmiyor.";
+      newErrors.confirmPassword = t("authPasswordMismatch");
     }
     return newErrors;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
@@ -70,7 +71,7 @@ function AuthPage() {
     if (mode === "register") {
       const result = await register(form.name, form.email, form.password);
       if (result.success) {
-        toast.success(isEN ? `Welcome, ${form.name}! 🐾` : `Hoş geldin, ${form.name}! 🐾`);
+        toast.success(t("authWelcome", { name: form.name }));
         navigate("/app");
       } else {
         setErrors({ email: result.error });
@@ -78,10 +79,10 @@ function AuthPage() {
     } else {
       const result = await login(form.email, form.password);
       if (result.success) {
-        toast.success(isEN ? "Login successful! 🐾" : "Giriş başarılı! 🐾");
+        toast.success(t("authLoginSuccess"));
         navigate("/app");
       } else {
-        setErrors({ password: isEN ? "Invalid email or password." : "E-posta veya şifre hatalı." });
+        setErrors({ password: t("authInvalidCredentials") });
       }
     }
     setLoading(false);
@@ -90,14 +91,14 @@ function AuthPage() {
   const handleGuest = async () => {
     const result = await loginAsGuest();
     if (result.success) {
-      toast(isEN ? "Continuing as guest." : "Misafir olarak devam ediyorsunuz.", { icon: "👤" });
+      toast(t("authGuestNotice"), { icon: "👤" });
       navigate("/app");
     } else {
       toast.error(result.error);
     }
   };
 
-  const inputClass = (field) => `w-full bg-gray-800 border ${
+  const inputClass = (field: string) => `w-full bg-gray-800 border ${
     errors[field] ? "border-red-500" : "border-gray-700"
   } rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all`;
 
@@ -118,14 +119,12 @@ function AuthPage() {
             <PatiLogo size={32} />
           </div>
           <h1 className="text-2xl font-bold text-white">PatiDefteri</h1>
-          <p className="text-gray-400 text-sm mt-1">
-            {isEN ? "Pet Care Journal" : "Evcil Hayvan Bakım Günlüğü"}
-          </p>
+          <p className="text-gray-400 text-sm mt-1">{t("appDesc")}</p>
         </div>
 
         <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 shadow-2xl">
           <div className="flex bg-gray-800 rounded-xl p-1 mb-6">
-            {["login", "register"].map((m) => (
+            {(["login", "register"] as const).map((m) => (
               <button
                 key={m}
                 onClick={() => { setMode(m); setErrors({}); setForm({ name: "", email: "", password: "", confirmPassword: "" }); }}
@@ -133,7 +132,7 @@ function AuthPage() {
                   mode === m ? "bg-emerald-500 text-white shadow-sm" : "text-gray-400 hover:text-gray-200"
                 }`}
               >
-                {m === "login" ? (isEN ? "Login" : "Giriş Yap") : (isEN ? "Register" : "Kayıt Ol")}
+                {m === "login" ? t("authLogin") : t("authRegister")}
               </button>
             ))}
           </div>
@@ -150,24 +149,20 @@ function AuthPage() {
               >
                 {mode === "register" && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1.5">
-                      {isEN ? "Name" : "İsim"}
-                    </label>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">{t("authName")}</label>
                     <input
                       name="name"
                       value={form.name}
                       onChange={handleChange}
                       className={inputClass("name")}
-                      placeholder={isEN ? "Your name" : "Adın Soyadın"}
+                      placeholder={t("authNamePlaceholder")}
                     />
                     {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">
-                    {isEN ? "Email" : "E-posta"}
-                  </label>
+                  <label className="block text-xs font-medium text-gray-400 mb-1.5">{t("authEmail")}</label>
                   <input
                     name="email"
                     type="email"
@@ -180,32 +175,28 @@ function AuthPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">
-                    {isEN ? "Password" : "Şifre"}
-                  </label>
+                  <label className="block text-xs font-medium text-gray-400 mb-1.5">{t("authPassword")}</label>
                   <input
                     name="password"
                     type="password"
                     value={form.password}
                     onChange={handleChange}
                     className={inputClass("password")}
-                    placeholder={isEN ? "At least 6 characters" : "En az 6 karakter"}
+                    placeholder={t("authPasswordPlaceholder")}
                   />
                   {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
                 </div>
 
                 {mode === "register" && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1.5">
-                      {isEN ? "Confirm Password" : "Şifre Tekrar"}
-                    </label>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">{t("authConfirmPassword")}</label>
                     <input
                       name="confirmPassword"
                       type="password"
                       value={form.confirmPassword}
                       onChange={handleChange}
                       className={inputClass("confirmPassword")}
-                      placeholder={isEN ? "Repeat your password" : "Şifreyi tekrar girin"}
+                      placeholder={t("authConfirmPasswordPlaceholder")}
                     />
                     {errors.confirmPassword && <p className="text-red-400 text-xs mt-1">{errors.confirmPassword}</p>}
                   </div>
@@ -216,7 +207,7 @@ function AuthPage() {
                   disabled={loading}
                   className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white py-3 rounded-xl font-medium transition-all cursor-pointer text-sm mt-2"
                 >
-                  {loading ? "..." : mode === "login" ? (isEN ? "Login" : "Giriş Yap") : (isEN ? "Register" : "Kayıt Ol")}
+                  {loading ? "..." : mode === "login" ? t("authLogin") : t("authRegister")}
                 </button>
               </motion.div>
             </AnimatePresence>
@@ -224,7 +215,7 @@ function AuthPage() {
 
           <div className="flex items-center gap-3 my-4">
             <div className="flex-1 h-px bg-gray-800" />
-            <span className="text-xs text-gray-500">{isEN ? "or" : "veya"}</span>
+            <span className="text-xs text-gray-500">{t("authOr")}</span>
             <div className="flex-1 h-px bg-gray-800" />
           </div>
 
@@ -232,14 +223,10 @@ function AuthPage() {
             onClick={handleGuest}
             className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 py-3 rounded-xl font-medium transition-all cursor-pointer text-sm border border-gray-700"
           >
-            👤 {isEN ? "Continue as Guest" : "Misafir olarak devam et"}
+            {t("authGuestContinue")}
           </button>
 
-          <p className="text-center text-xs text-gray-600 mt-4">
-            ⚠️ {isEN
-              ? "Guest data is tied to this browser session. If you log out without creating an account, you'll lose access to it — you can upgrade to a permanent account anytime from Settings."
-              : "Misafir verileri bu tarayıcı oturumuna bağlıdır. Hesap oluşturmadan çıkış yaparsanız bu verilere erişiminizi kaybedersiniz — Ayarlar'dan istediğiniz zaman kalıcı hesaba yükseltebilirsiniz."}
-          </p>
+          <p className="text-center text-xs text-gray-600 mt-4">{t("authGuestWarning")}</p>
         </div>
       </motion.div>
     </div>

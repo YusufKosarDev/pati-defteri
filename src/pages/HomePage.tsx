@@ -10,10 +10,22 @@ import SummaryBanner from "../components/UI/SummaryBanner";
 import DemoLoader from "../components/UI/DemoLoader";
 import { PageSkeleton } from "../components/UI/Skeleton";
 import { isOverdue, isUpcoming, getDaysUntil } from "../utils/dateHelpers";
+import { recordTypeLabel } from "../utils/recordTypes";
 import useLocalStorage from "../hooks/useLocalStorage";
 import usePageTitle from "../hooks/usePageTitle";
+import { captureException } from "../lib/sentry";
+import type { Pet } from "../types";
 
-function StatCard({ icon, label, value, color, delay, sub }) {
+type StatCardProps = {
+  icon: string;
+  label: string;
+  value: number;
+  color: string;
+  delay: number;
+  sub?: string | null;
+};
+
+function StatCard({ icon, label, value, color, delay, sub }: StatCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -33,7 +45,7 @@ function StatCard({ icon, label, value, color, delay, sub }) {
   );
 }
 
-function QuickInsight({ icon, text, color }) {
+function QuickInsight({ icon, text, color }: { icon: string; text: string; color: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, x: -10 }}
@@ -46,40 +58,36 @@ function QuickInsight({ icon, text, color }) {
   );
 }
 
-function HomePage({ onSelectPet }) {
+function HomePage({ onSelectPet }: { onSelectPet: (pet: Pet) => void }) {
   const [showDemo, setShowDemo] = useState(false);
   const { pets, records, weights, loading } = usePet();
   const { user } = useAuth();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isEN = i18n.language === "en";
 
-  usePageTitle(isEN ? "My Pets" : "Hayvanlarım");
+  usePageTitle(t("myPets"));
 
   const [onboardingSeen] = useLocalStorage("onboarding_seen", false);
   const [demoShown, setDemoShown] = useLocalStorage(`demo_shown_${user?.id}`, false);
   const loadDemoData = useLoadDemoData();
 
   useEffect(() => {
-    // Veri gerçekten yüklenene kadar demo kararını verme.
     if (loading) return;
     if (demoShown || pets.length > 0) return;
 
-    // Misafir kullanıcılar için demo otomatik yüklensin — LinkedIn ziyaretçisi
-    // ilk girdiğinde boş ekran yerine dolu uygulama görsün.
     if (user?.isGuest) {
       (async () => {
         try {
           await loadDemoData();
-          toast.success(isEN ? "Demo pets loaded for you 🐾" : "Senin için demo hayvanlar yüklendi 🐾");
+          toast.success(t("homeDemoLoaded"));
         } catch (err) {
-          console.error(err);
+          captureException(err, { context: "HomePage auto demo load" });
         }
         setDemoShown(true);
       })();
       return;
     }
 
-    // Kayıtlı kullanıcılar için onboarding sonrası modal ile sor
     if (onboardingSeen) {
       setShowDemo(true);
     }
@@ -100,100 +108,87 @@ function HomePage({ onSelectPet }) {
 
   const nextCare = records
     .filter((r) => r.nextDate && !isOverdue(r.nextDate))
-    .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate))[0];
+    .sort((a, b) => new Date(a.nextDate!).getTime() - new Date(b.nextDate!).getTime())[0];
   const nextCarePet = nextCare ? pets.find((p) => p.id === nextCare.petId) : null;
   const nextCareDays = nextCare ? getDaysUntil(nextCare.nextDate) : null;
 
-  const lastRecord = [...records].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+  const lastRecord = [...records].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
   const lastRecordPet = lastRecord ? pets.find((p) => p.id === lastRecord.petId) : null;
 
   const totalWeights = weights.length;
 
-  const insights = [];
+  const insights: { icon: string; text: string; color: string }[] = [];
   if (overdueCount > 0) {
     insights.push({
       icon: "⚠️",
-      text: isEN ? `${overdueCount} overdue care needs attention!` : `${overdueCount} gecikmiş bakım acil ilgi gerektiriyor!`,
+      text: t("insightOverdue", { count: overdueCount }),
       color: "bg-red-500/10 text-red-400 border border-red-500/20",
     });
   }
   if (nextCare && nextCarePet) {
     insights.push({
       icon: "⏰",
-      text: isEN
-        ? `${nextCarePet.name}'s ${nextCare.type} in ${nextCareDays === 0 ? "today" : `${nextCareDays} days`}`
-        : `${nextCarePet.name}'ın ${nextCare.type} bakımı ${nextCareDays === 0 ? "bugün" : `${nextCareDays} gün sonra`}`,
+      text: nextCareDays === 0
+        ? t("insightUpcomingToday", { name: nextCarePet.name, type: recordTypeLabel(nextCare.type, isEN) })
+        : t("insightUpcomingDays", { name: nextCarePet.name, type: recordTypeLabel(nextCare.type, isEN), days: nextCareDays }),
       color: "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20",
     });
   }
   if (lastRecordPet && !overdueCount) {
     insights.push({
       icon: "✅",
-      text: isEN
-        ? `Last record: ${lastRecordPet.name}'s ${lastRecord.type}`
-        : `Son kayıt: ${lastRecordPet.name}'ın ${lastRecord.type}`,
+      text: t("insightLastRecord", { name: lastRecordPet.name, type: recordTypeLabel(lastRecord.type, isEN) }),
       color: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
     });
   }
 
-  const stats = [
+  const catCount = pets.filter((p) => p.type === "cat").length;
+  const dogCount = pets.filter((p) => p.type === "dog").length;
+
+  const stats: StatCardProps[] = [
     {
       icon: "🐾",
-      label: isEN ? "Pets" : "Hayvan",
+      label: t("homePets"),
       value: pets.length,
       color: "bg-emerald-500/10",
       delay: 0.1,
-      sub: pets.length > 0
-        ? isEN
-          ? `${pets.filter(p => p.type === "Kedi" || p.type === "Cat").length} cat, ${pets.filter(p => p.type === "Köpek" || p.type === "Dog").length} dog`
-          : `${pets.filter(p => p.type === "Kedi" || p.type === "Cat").length} kedi, ${pets.filter(p => p.type === "Köpek" || p.type === "Dog").length} köpek`
-        : null,
+      sub: pets.length > 0 ? t("homeCatDog", { cats: catCount, dogs: dogCount }) : null,
     },
     {
       icon: "💉",
-      label: isEN ? "Records" : "Kayıt",
+      label: t("records"),
       value: records.length,
       color: "bg-blue-500/10",
       delay: 0.15,
-      sub: records.length > 0
-        ? isEN
-          ? `avg ${(records.length / Math.max(pets.length, 1)).toFixed(1)} per pet`
-          : `pet başına ort. ${(records.length / Math.max(pets.length, 1)).toFixed(1)}`
-        : null,
+      sub: records.length > 0 ? t("homeAvgPerPet", { count: (records.length / Math.max(pets.length, 1)).toFixed(1) }) : null,
     },
     {
       icon: "⏰",
-      label: isEN ? "Upcoming" : "Yaklaşan",
+      label: t("homeUpcoming"),
       value: upcomingCount,
       color: "bg-yellow-500/10",
       delay: 0.2,
-      sub: upcomingCount > 0
-        ? (isEN ? "within 30 days" : "30 gün içinde")
-        : (isEN ? "all clear!" : "hepsi tamam!"),
+      sub: upcomingCount > 0 ? t("homeWithin30") : t("homeAllClear"),
     },
     {
       icon: "⚠️",
-      label: isEN ? "Overdue" : "Gecikmiş",
+      label: t("homeOverdue"),
       value: overdueCount,
       color: overdueCount > 0 ? "bg-red-500/10" : "bg-gray-800",
       delay: 0.25,
-      sub: overdueCount > 0
-        ? (isEN ? "needs attention" : "ilgi gerektiriyor")
-        : (isEN ? "nothing overdue" : "gecikmiş yok"),
+      sub: overdueCount > 0 ? t("homeNeedsAttention") : t("homeNothingOverdue"),
     },
     {
       icon: "⚖️",
-      label: isEN ? "Weight Records" : "Ağırlık Kaydı",
+      label: t("homeWeightRecords"),
       value: totalWeights,
       color: "bg-violet-500/10",
       delay: 0.3,
-      sub: totalWeights > 0
-        ? (isEN ? `for ${pets.length} pet${pets.length > 1 ? "s" : ""}` : `${pets.length} hayvan için`)
-        : null,
+      sub: totalWeights > 0 ? t("homeFor", { count: pets.length }) : null,
     },
     {
       icon: "📅",
-      label: isEN ? "This Month" : "Bu Ay",
+      label: t("homeThisMonth"),
       value: records.filter((r) => {
         const d = new Date(r.date);
         const now = new Date();
@@ -201,14 +196,12 @@ function HomePage({ onSelectPet }) {
       }).length,
       color: "bg-pink-500/10",
       delay: 0.35,
-      sub: isEN ? "care records done" : "bakım kaydı yapıldı",
+      sub: t("homeCareRecords"),
     },
   ];
 
   const hour = new Date().getHours();
-  const greeting = isEN
-    ? hour < 12 ? "🌅 Good morning!" : hour < 18 ? "☀️ Good afternoon!" : "🌙 Good evening!"
-    : hour < 12 ? "🌅 Günaydın!" : hour < 18 ? "☀️ İyi günler!" : "🌙 İyi akşamlar!";
+  const greeting = hour < 12 ? t("homeGoodMorning") : hour < 18 ? t("homeGoodAfternoon") : t("homeGoodEvening");
 
   return (
     <>
@@ -220,11 +213,7 @@ function HomePage({ onSelectPet }) {
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
           <h1 className="text-2xl font-bold text-gray-100">{greeting}</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {pets.length === 0
-              ? (isEN ? "Add your first pet to get started." : "Başlamak için ilk hayvanını ekle.")
-              : isEN
-                ? `You're tracking ${pets.length} pet${pets.length > 1 ? "s" : ""}.`
-                : `${pets.length} hayvanı takip ediyorsunuz.`}
+            {pets.length === 0 ? t("homeAddFirst") : t("homeTrackingOne", { count: pets.length })}
           </p>
         </motion.div>
 

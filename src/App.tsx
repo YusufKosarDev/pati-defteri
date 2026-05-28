@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useMemo } from "react";
+import { useState, lazy, Suspense, useMemo, type ReactNode, type Dispatch, type SetStateAction } from "react";
 import { BrowserRouter, Routes, Route, useNavigate, useParams, useLocation, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { PetProvider } from "./context/PetContext";
@@ -23,19 +23,18 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 function PageLoader() {
-  const { i18n } = useTranslation();
-  const isEN = i18n.language === "en";
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="w-10 h-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-gray-500 text-sm">{isEN ? "Loading..." : "Yükleniyor..."}</p>
+        <p className="text-gray-500 text-sm">{t("loading")}</p>
       </div>
     </div>
   );
 }
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
   if (loading) return <PageLoader />;
@@ -43,12 +42,13 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-function PetDetailWrapper({ tabMemory, setTabMemory }) {
+type TabMemory = Record<string, string>;
+
+function PetDetailWrapper({ tabMemory, setTabMemory }: { tabMemory: TabMemory; setTabMemory: Dispatch<SetStateAction<TabMemory>> }) {
   const { id } = useParams();
   const { pets } = usePet();
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
-  const isEN = i18n.language === "en";
+  const { t } = useTranslation();
   const pet = pets.find((p) => p.id === id);
 
   if (!pet) {
@@ -57,10 +57,10 @@ function PetDetailWrapper({ tabMemory, setTabMemory }) {
         <div className="max-w-5xl mx-auto px-6 py-16 text-center text-gray-500">
           <div className="text-6xl mb-4">🐾</div>
           <p className="text-lg font-medium text-gray-300">
-            {isEN ? "Pet not found." : "Hayvan bulunamadı."}
+            {t("petNotFound")}
           </p>
           <button onClick={() => navigate("/app")} className="mt-4 text-emerald-400 underline cursor-pointer">
-            {isEN ? "Back to home" : "Ana sayfaya dön"}
+            {t("goHome")}
           </button>
         </div>
       </PageTransition>
@@ -73,8 +73,8 @@ function PetDetailWrapper({ tabMemory, setTabMemory }) {
         key={pet.id}
         pet={pet}
         onBack={() => navigate("/app")}
-        initialTab={tabMemory[id] || "records"}
-        onTabChange={(tab) => setTabMemory((prev) => ({ ...prev, [id]: tab }))}
+        initialTab={tabMemory[pet.id] || "records"}
+        onTabChange={(tab) => setTabMemory((prev) => ({ ...prev, [pet.id]: tab }))}
       />
     </PageTransition>
   );
@@ -84,12 +84,12 @@ function AppRoutes() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuth();
-  const [tabMemory, setTabMemory] = useState({});
+  const [tabMemory, setTabMemory] = useState<TabMemory>({});
   const [searchOpen, setSearchOpen] = useState(false);
   const isLanding = location.pathname === "/";
   const isAuth = location.pathname === "/auth";
 
-  const shortcuts = useMemo(() => ({
+  const shortcuts = useMemo<Record<string, () => void>>(() => ({
     "ctrl+k": () => { if (isAuthenticated) setSearchOpen(true); },
     "ctrl+h": () => { if (isAuthenticated) navigate("/app"); },
     "ctrl+,": () => { if (isAuthenticated) navigate("/settings"); },
