@@ -147,7 +147,7 @@
 ### Test & Kalite
 | Paket | Kullanım |
 |-------|----------|
-| TypeScript | Tip güvenliği (strict mode, allowJs ile aşamalı geçiş) |
+| TypeScript | Tip güvenliği (strict mode, frontend uçtan uca TS) |
 | Vitest + jsdom | Client unit testler |
 | React Testing Library | Komponent testleri (render + etkileşim + a11y) |
 | convex-test + edge-runtime | Convex backend entegrasyon testleri (auth + ownership + veri silme/taşıma) |
@@ -243,7 +243,7 @@ Ayrıca **Playwright E2E** (`e2e/`) — routing, lazy-load ve temel akışları 
 ├─ src/
 │  ├─ pages/            # LandingPage, HomePage, PetDetailPage, ...
 │  ├─ components/       # Pet, Record, Weight, Vet, Layout, UI
-│  ├─ context/          # AuthProvider, PetProvider (sadece JSX)
+│  ├─ context/          # AuthProvider, PetProvider
 │  ├─ hooks/            # useAuth, usePet, useNotifications, useConfetti, ...
 │  ├─ lib/              # convex client, sentry init
 │  ├─ utils/            # dateHelpers, recordTypes (TS) + testleri
