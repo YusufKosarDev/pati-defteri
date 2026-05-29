@@ -1,5 +1,5 @@
-const CACHE_NAME = "patidefteri-v2";
-const STATIC_CACHE = "patidefteri-static-v2";
+const CACHE_NAME = "patidefteri-v3";
+const STATIC_CACHE = "patidefteri-static-v3";
 
 const STATIC_ASSETS = [
   "/",

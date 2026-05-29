@@ -174,7 +174,7 @@ function StatsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <ChartCard title={t("statsMonthlyTitle")} delay={0.1}>
             <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={224}>
                 <AreaChart data={monthlyData()} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
@@ -203,7 +203,7 @@ function StatsPage() {
 
           <ChartCard title={t("statsTypeDistTitle")} delay={0.15}>
             <div className="h-56 flex items-center gap-4">
-              <ResponsiveContainer width="55%" height="100%">
+              <ResponsiveContainer width="55%" height={224}>
                 <PieChart>
                   <Pie
                     data={typeData()}
@@ -235,7 +235,7 @@ function StatsPage() {
 
           <ChartCard title={t("statsRecordsPerPet")} delay={0.2}>
             <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={224}>
                 <BarChart data={petRecordsData()} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="name" tick={{ fill: "#9ca3af", fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -253,7 +253,7 @@ function StatsPage() {
           <ChartCard title={t("statsWeightTrend")} delay={0.25}>
             <div className="h-56">
               {weights.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={224}>
                   <LineChart data={weightTrendData()} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="date" tick={{ fill: "#9ca3af", fontSize: 10 }} axisLine={false} tickLine={false} />
