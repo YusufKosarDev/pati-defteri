@@ -1,3 +1,19 @@
+// PatiDefteri için ekran görüntüleri üretir.
+//
+// Çalışma modları:
+//   1) Default — canlı Vercel URL'ini hedefler:
+//        npm run screenshots
+//   2) Özel URL — `SCREENSHOTS_BASE_URL` env var:
+//        SCREENSHOTS_BASE_URL=https://pati-defteri-git-foo.vercel.app npm run screenshots
+//   3) Lokal — `http://localhost:5173` verilirse Vite dev'i otomatik başlatır.
+//      ÖNEMLI: Convex backend ayrı terminalde `npx convex dev` ile çalışıyor olmalı.
+//        SCREENSHOTS_BASE_URL=http://localhost:5173 npm run screenshots
+//
+// Veri seed yöntemi: misafir oturumu açıyor; HomePage useEffect'i misafir +
+// boş pets durumunda `useLoadDemoData`'yı otomatik tetikler ve `convex/backup.ts`
+// `replaceAll` mutation'ı 2 pet + 8 kayıt + 8 ağırlık ekler. Demo veriler gerçek
+// Convex backend'inde oluşur, screenshot'lar gerçek render'ı yansıtır.
+
 import { spawn } from "node:child_process";
 import { setTimeout as wait } from "node:timers/promises";
 import { chromium } from "playwright";
@@ -7,99 +23,17 @@ import path from "node:path";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 
+const BASE_URL = process.env.SCREENSHOTS_BASE_URL || "https://pati-defteri.vercel.app";
+const IS_LOCAL = BASE_URL.startsWith("http://localhost");
 const VIEWPORT = { width: 1440, height: 900 };
 const DEVICE_SCALE = 2;
 
-function daysFromNow(offset) {
-  const d = new Date();
-  d.setDate(d.getDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
-
-function yearsAgo(years, monthOffset = 0) {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() - years);
-  d.setMonth(d.getMonth() + monthOffset);
-  return d.toISOString().slice(0, 10);
-}
-
-const USER_ID = "demo_user_screenshot";
-const SAFE_USER = { id: USER_ID, name: "Yusuf", email: "demo@patidefteri.app", isGuest: false };
-
-const PETS = [
-  {
-    id: "demo_pet_1",
-    name: "Pamuk",
-    type: "Kedi",
-    breed: "Van Kedisi",
-    birthDate: yearsAgo(3, 2),
-    photo: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=400&fit=crop",
-    notes: "Çok sevecen, oyun sever.",
-    vets: [{
-      clinicName: "Dostlar Veteriner Kliniği",
-      doctorName: "Dr. Ayşe Yılmaz",
-      phone: "0532 123 45 67",
-      address: "Kadıköy, İstanbul",
-      notes: "Acil durumda ara",
-    }],
-  },
-  {
-    id: "demo_pet_2",
-    name: "Karamel",
-    type: "Köpek",
-    breed: "Golden Retriever",
-    birthDate: yearsAgo(4, -3),
-    photo: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop",
-    notes: "Çok enerjik, parkta oynamayı sever.",
-    vets: [{
-      clinicName: "Pati Veteriner Merkezi",
-      doctorName: "Dr. Mehmet Kaya",
-      phone: "0533 987 65 43",
-      address: "Beşiktaş, İstanbul",
-      notes: "Salı günleri kapalı",
-    }],
-  },
-];
-
-const RECORDS = [
-  { id: "r1", petId: "demo_pet_1", type: "Karma Aşı", date: daysFromNow(-380), nextDate: daysFromNow(-15), notes: "Yıllık karma aşı yapıldı." },
-  { id: "r2", petId: "demo_pet_1", type: "Kuduz Aşısı", date: daysFromNow(-380), nextDate: daysFromNow(-15), notes: "" },
-  { id: "r3", petId: "demo_pet_1", type: "Parazit Damlası", date: daysFromNow(-75), nextDate: daysFromNow(15), notes: "Frontline Plus kullanıldı." },
-  { id: "r4", petId: "demo_pet_1", type: "Veteriner Ziyareti", date: daysFromNow(-180), nextDate: "", notes: "Genel kontrol, her şey normal." },
-  { id: "r5", petId: "demo_pet_2", type: "Karma Aşı", date: daysFromNow(-300), nextDate: daysFromNow(65), notes: "Yıllık aşılar yapıldı." },
-  { id: "r6", petId: "demo_pet_2", type: "Kuduz Aşısı", date: daysFromNow(-300), nextDate: daysFromNow(65), notes: "" },
-  { id: "r7", petId: "demo_pet_2", type: "Kurtluk İlacı", date: daysFromNow(-85), nextDate: daysFromNow(5), notes: "Drontal Plus verildi." },
-  { id: "r8", petId: "demo_pet_2", type: "Parazit Damlası", date: daysFromNow(-30), nextDate: daysFromNow(60), notes: "" },
-];
-
-const WEIGHTS = [
-  { id: "w1", petId: "demo_pet_1", weight: "3.8", date: daysFromNow(-330), notes: "" },
-  { id: "w2", petId: "demo_pet_1", weight: "3.9", date: daysFromNow(-240), notes: "" },
-  { id: "w3", petId: "demo_pet_1", weight: "4.1", date: daysFromNow(-150), notes: "Biraz kilo aldı" },
-  { id: "w4", petId: "demo_pet_1", weight: "4.0", date: daysFromNow(-60), notes: "" },
-  { id: "w5", petId: "demo_pet_2", weight: "28.5", date: daysFromNow(-330), notes: "" },
-  { id: "w6", petId: "demo_pet_2", weight: "29.0", date: daysFromNow(-240), notes: "" },
-  { id: "w7", petId: "demo_pet_2", weight: "29.8", date: daysFromNow(-150), notes: "" },
-  { id: "w8", petId: "demo_pet_2", weight: "30.2", date: daysFromNow(-60), notes: "Hafif fazla, diyet başlandı" },
-];
-
-const PAGES = [
-  { name: "landing", url: "/", waitFor: "h1", out: "screenshot-landing.png" },
-  { name: "home", url: "/app", waitFor: "text=Hayvanlarım", out: "screenshot-home.png" },
-  { name: "detail", url: "/pets/demo_pet_1", waitFor: "text=Pamuk", out: "screenshot-detail.png" },
-  { name: "stats", url: "/stats", waitFor: "text=İstatistikler", out: "screenshot-stats.png" },
-  { name: "calendar", url: "/calendar", waitFor: "text=Aşı Takvimi", out: "screenshot-calendar.png" },
-  { name: "settings", url: "/settings", waitFor: "text=Ayarlar", out: "screenshot-settings.png" },
-];
-
-const ANSI_RE = /\[[0-9;]*m/g;
+const ANSI_RE = /\x1b\[[0-9;]*m/g;
 
 function waitForVitePort(child, maxMs = 60000) {
   return new Promise((resolve, reject) => {
     let buf = "";
-    const timer = setTimeout(() => {
-      reject(new Error(`Vite ${maxMs}ms içinde Local URL yazmadı`));
-    }, maxMs);
+    const timer = setTimeout(() => reject(new Error(`Vite ${maxMs}ms içinde Local URL yazmadı`)), maxMs);
     const onData = (chunk) => {
       const text = chunk.toString();
       process.stdout.write(`  [vite] ${text}`);
@@ -124,68 +58,122 @@ async function waitForServer(url, maxMs = 30000) {
     } catch {}
     await wait(300);
   }
-  throw new Error(`Dev server ${url} adresinde ${maxMs}ms içinde 200 vermedi`);
+  throw new Error(`Server ${url} adresinde ${maxMs}ms içinde 200 vermedi`);
+}
+
+async function captureLanding(page, base) {
+  console.log(`→ landing (${base}/)`);
+  await page.goto(`${base}/`, { waitUntil: "networkidle" });
+  await page.waitForSelector("h1", { timeout: 15_000 });
+  await wait(1500);
+  await page.screenshot({ path: path.join(ROOT, "screenshot-landing.png"), fullPage: false });
+  console.log("  ✓ screenshot-landing.png");
+}
+
+async function loginAsGuest(page, base) {
+  console.log(`→ /auth → misafir login`);
+  await page.goto(`${base}/auth`, { waitUntil: "networkidle" });
+  // Misafir butonu i18n metni: "👤 Misafir olarak devam et" / "👤 Continue as Guest"
+  const guestBtn = page.getByRole("button", { name: /Misafir|Guest/i });
+  await guestBtn.click();
+  // Auth + redirect + demo data yüklenmesi için bekle. HomePage useEffect bir
+  // mutation tetikler; pets listesi gözükene kadar bekleyelim.
+  await page.waitForURL(/\/app$/, { timeout: 20_000 });
+  console.log("  → /app, demo data bekleniyor (max 60s)...");
+  // Demo data flow: anonim signIn → replaceAll mutation → listForUser refetch.
+  // Convex latency'sine göre 10-30s sürer. h3'te pet adı görünene kadar bekle.
+  await page.waitForSelector("h3:has-text(\"Karamel\"), h3:has-text(\"Pamuk\")", { timeout: 60_000 });
+  await wait(2000); // animasyonlar otursun
+}
+
+async function captureHome(page) {
+  console.log("→ home (/app)");
+  await page.screenshot({ path: path.join(ROOT, "screenshot-home.png"), fullPage: false });
+  console.log("  ✓ screenshot-home.png");
+}
+
+async function captureDetail(page) {
+  console.log("→ detail (Pamuk)");
+  // /app'te h3 yalnızca PetCard'larda görünür (HomePage stat'leri <p> kullanır,
+  // PetList başlığı <h2>'dir). Yani h3 sırası pet kart sırasına = "Kayıtlar"
+  // butonu sırasına eşittir. Pamuk'un h3 index'ini bulup aynı index'teki butona tıkla.
+  const h3Texts = (await page.locator("h3").allTextContents()).map((t) => t.trim());
+  const pamukIdx = h3Texts.indexOf("Pamuk");
+  if (pamukIdx === -1) {
+    throw new Error(`Pamuk kartı bulunamadı. Görünen h3'ler: ${JSON.stringify(h3Texts)}`);
+  }
+  const recordsBtn = page.getByRole("button", { name: /^Kayıtlar$|^Records$/ }).nth(pamukIdx);
+  await recordsBtn.scrollIntoViewIfNeeded();
+  await recordsBtn.click();
+  await page.waitForURL(/\/pets\//, { timeout: 15_000 });
+  await page.waitForSelector('h2:has-text("Pamuk")', { timeout: 15_000 });
+  await wait(1500);
+  await page.screenshot({ path: path.join(ROOT, "screenshot-detail.png"), fullPage: false });
+  console.log("  ✓ screenshot-detail.png");
+}
+
+async function captureSimple(page, base, route, uniqueSelector, file) {
+  console.log(`→ ${file.replace("screenshot-", "").replace(".png", "")} (${route})`);
+  await page.goto(`${base}${route}`, { waitUntil: "networkidle" });
+  // Lazy-chunk yüklenip route render edilene kadar bekle. Selector navbar'da
+  // değil sadece o sayfada görünen bir öğe olmalı (navbar her sayfada aynı).
+  await page.waitForSelector(uniqueSelector, { timeout: 20_000 });
+  await wait(1500);
+  await page.screenshot({ path: path.join(ROOT, file), fullPage: false });
+  console.log(`  ✓ ${file}`);
 }
 
 async function main() {
-  console.log("→ Vite dev server başlatılıyor (strictPort yok, müsait portu bul)...");
-  const vite = spawn("npm", ["run", "dev"], {
-    cwd: ROOT,
-    shell: true,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  vite.stderr.on("data", (d) => process.stderr.write(`  [vite!] ${d}`));
+  let vite = null;
+  let resolvedBase = BASE_URL;
 
-  try {
+  if (IS_LOCAL) {
+    console.log("→ Lokal mod: Vite dev başlatılıyor. Convex backend'in `npx convex dev` ile çalışıyor olduğunu varsayıyoruz.");
+    vite = spawn("npm", ["run", "dev"], { cwd: ROOT, shell: true, stdio: ["ignore", "pipe", "pipe"] });
+    vite.stderr.on("data", (d) => process.stderr.write(`  [vite!] ${d}`));
     const port = await waitForVitePort(vite);
-    const base = `http://localhost:${port}`;
-    console.log(`→ Vite portu: ${port}`);
-    await waitForServer(`${base}/`);
-    console.log("→ Server hazır, Chromium açılıyor...");
+    resolvedBase = `http://localhost:${port}`;
+  }
 
-    const browser = await chromium.launch();
+  console.log(`→ Hedef: ${resolvedBase}`);
+  await waitForServer(`${resolvedBase}/`);
+
+  const browser = await chromium.launch();
+  try {
     const context = await browser.newContext({
       viewport: VIEWPORT,
       deviceScaleFactor: DEVICE_SCALE,
       locale: "tr-TR",
     });
-
-    await context.addInitScript((payload) => {
-      const { user, pets, records, weights, userId } = payload;
-      localStorage.setItem("current_user", JSON.stringify(user));
-      localStorage.setItem(`pets_${userId}`, JSON.stringify(pets));
-      localStorage.setItem(`records_${userId}`, JSON.stringify(records));
-      localStorage.setItem(`weights_${userId}`, JSON.stringify(weights));
+    // Misafir oturumu temiz başlasın: onboarding'i atla, demo modal'ı engelle
+    await context.addInitScript(() => {
       localStorage.setItem("onboarding_seen", "true");
-      localStorage.setItem(`demo_shown_${userId}`, "true");
-      localStorage.setItem("language", "tr");
-    }, { user: SAFE_USER, pets: PETS, records: RECORDS, weights: WEIGHTS, userId: USER_ID });
+      localStorage.setItem("language", JSON.stringify("tr"));
+    });
 
     const page = await context.newPage();
-
-    for (const p of PAGES) {
-      console.log(`→ ${p.name} (${p.url})`);
-      await page.goto(`${base}${p.url}`, { waitUntil: "networkidle" });
-      try {
-        await page.waitForSelector(p.waitFor, { timeout: 10000 });
-      } catch {
-        console.warn(`  uyarı: '${p.waitFor}' seçicisi bulunamadı, yine de çekiliyor`);
-      }
-      await wait(1200);
-      const outPath = path.join(ROOT, p.out);
-      await page.screenshot({ path: outPath, fullPage: false });
-      console.log(`  ✓ ${p.out}`);
-    }
-
-    await browser.close();
+    await captureLanding(page, resolvedBase);
+    await loginAsGuest(page, resolvedBase);
+    await captureHome(page);
+    await captureDetail(page);
+    // Her sayfa için lazy-load'dan sonra render edilen sayfa-spesifik bir
+    // selector kullan (navbar link metni yetersiz — her sayfada görünür).
+    await captureSimple(page, resolvedBase, "/stats", "text=Toplam Hayvan", "screenshot-stats.png");
+    await captureSimple(page, resolvedBase, "/calendar", "h1:has-text(\"Aşı Takvimi\")", "screenshot-calendar.png");
+    await captureSimple(page, resolvedBase, "/settings", "text=Profil", "screenshot-settings.png");
   } finally {
-    console.log("→ Dev server kapatılıyor...");
-    if (process.platform === "win32") {
-      spawn("taskkill", ["/pid", vite.pid, "/f", "/t"], { shell: true });
-    } else {
-      vite.kill("SIGTERM");
+    await browser.close();
+    if (vite) {
+      console.log("→ Vite dev kapatılıyor...");
+      if (process.platform === "win32") {
+        spawn("taskkill", ["/pid", vite.pid, "/f", "/t"], { shell: true });
+      } else {
+        vite.kill("SIGTERM");
+      }
     }
   }
+
+  console.log("✓ Tüm ekran görüntüleri üretildi.");
 }
 
 main().catch((err) => {
