@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
@@ -59,7 +59,6 @@ function QuickInsight({ icon, text, color }: { icon: string; text: string; color
 }
 
 function HomePage({ onSelectPet }: { onSelectPet: (pet: Pet) => void }) {
-  const [showDemo, setShowDemo] = useState(false);
   const { pets, records, weights, loading } = usePet();
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
@@ -71,33 +70,26 @@ function HomePage({ onSelectPet }: { onSelectPet: (pet: Pet) => void }) {
   const [demoShown, setDemoShown] = useLocalStorage(`demo_shown_${user?.id}`, false);
   const loadDemoData = useLoadDemoData();
 
+  // Modal görünürlüğü türetilmiş: kullanıcı modal'ı kapatınca demoShown true
+  // olur ve bu otomatik olarak false'a düşer (effect içinde setState yok).
+  const showDemo = !loading && !demoShown && pets.length === 0 && !user?.isGuest && onboardingSeen;
+
   useEffect(() => {
-    if (loading) return;
-    if (demoShown || pets.length > 0) return;
-
-    if (user?.isGuest) {
-      (async () => {
-        try {
-          await loadDemoData();
-          toast.success(t("homeDemoLoaded"));
-        } catch (err) {
-          captureException(err, { context: "HomePage auto demo load" });
-        }
-        setDemoShown(true);
-      })();
-      return;
-    }
-
-    if (onboardingSeen) {
-      setShowDemo(true);
-    }
+    // Misafir kullanıcı için demoyu sessizce auto-load et (modal olmadan).
+    if (loading || demoShown || pets.length > 0 || !user?.isGuest) return;
+    (async () => {
+      try {
+        await loadDemoData();
+        toast.success(t("homeDemoLoaded"));
+      } catch (err) {
+        captureException(err, { context: "HomePage auto demo load" });
+      }
+      setDemoShown(true);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, onboardingSeen, demoShown, pets.length, user?.isGuest]);
+  }, [loading, demoShown, pets.length, user?.isGuest]);
 
-  const handleDemoClose = () => {
-    setShowDemo(false);
-    setDemoShown(true);
-  };
+  const handleDemoClose = () => setDemoShown(true);
 
   if (loading) return <PageSkeleton />;
 
