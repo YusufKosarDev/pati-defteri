@@ -20,6 +20,9 @@
       "eslint"
     ]
   },
+  "overrides": {
+    "ws": "^8.21.0"
+  },
   "dependencies": {
     "@auth/core": "^0.37.4",
     "@convex-dev/auth": "^0.0.92",
