@@ -108,10 +108,12 @@
    Tarayıcı / Telefon             web-push + Resend
 ```
 
-- **Frontend:** Vite + React, tüm UI client-side
+- **Frontend:** Vite + React, tüm UI client-side, uçtan uca TypeScript
 - **Backend:** Convex — gerçek-zamanlı Postgres + sunucu fonksiyonları + dosya depolama
 - **Auth:** `@convex-dev/auth` — Anonymous (misafir) + Password (kayıt) provider'ları, her mutation server-side ownership guard'ı ile korunur
-- **Storage:** Hayvan fotoğrafları Convex Storage (CDN), DB satırlarına gömülmez
+- **Storage:** Hayvan fotoğrafları Convex Storage (CDN), DB satırlarına gömülmez; foto değişimi/silinmesinde eski objeyi otomatik temizler (yetim dosya bırakmaz)
+- **Sunucu tarafı güvenlik:** Kullanıcı başına rate-limit (`pets/records/weights` create + update + remove), alan başına length validation (`name ≤ 100`, `notes ≤ 2000`, vb.), `reorder` array uzunluk tavanı, tipli `ownership` guard'ları paylaşılan modülde
+- **Veri modeli:** Pet/Record türleri **stabil anahtar** olarak saklanır (`cat`/`mixed_vaccine` …); legacy lokalize değerler okuma sırasında normalize edilir (geriye dönük yedek uyumluluğu)
 - **Bildirim:** Convex action içinde `web-push` ile VAPID push; günlük cron tarama
 - **Observability:** Sentry (opsiyonel) — error + replay-on-error
 - **Hosting:** Vercel (frontend) + Convex deployment (backend)
@@ -212,13 +214,13 @@ npm run screenshots  # README ekran görüntülerini yeniden üret (Playwright)
 
 1. **Pre-commit hook** (`.husky/pre-commit`) — `lint-staged` (max-warnings=0) + `typecheck` + tüm testler. Kırık kod commit edilemez.
 2. **PR template** (`.github/PULL_REQUEST_TEMPLATE.md`) — kod, güvenlik, test, UI ve performans kategorilerinde self-review checklist.
-3. **GitHub Actions** (`.github/workflows/ci.yml`) — her push/PR'de `lint · typecheck · test · build` dördü de zorunlu.
+3. **GitHub Actions** (`.github/workflows/ci.yml`) — her push/PR'de `lint · typecheck (src + convex) · test · build` dördü de zorunlu (Ubuntu / Node 24).
 
 ### Test mimarisi
 
 Vitest iki proje config'i kullanır:
-- **`client`** projesi (`jsdom` env) — util testleri + React Testing Library ile komponent testleri (Modal/ConfirmModal a11y davranışı, AuthPage form doğrulaması).
-- **`convex`** projesi (`edge-runtime` env) — `convex-test` ile gerçek mutation/query'ler; auth, ownership ve hesap silme/veri taşıma davranışı sabit testlerle korunur.
+- **`client`** projesi (`jsdom` env) — util testleri (tarih hesaplamaları, tür normalize/etiket sistemi) + React Testing Library ile komponent testleri (Modal/ConfirmModal a11y davranışı, AuthPage form doğrulaması).
+- **`convex`** projesi (`edge-runtime` env) — `convex-test` ile gerçek mutation/query'ler; auth, ownership, hesap silme/veri taşıma, fotoğraf orphan koruması, reorder abuse limiti, length validation ve hatırlatıcı bucket mantığı sabit testlerle korunur.
 
 Ayrıca **Playwright E2E** (`e2e/`) — routing, lazy-load ve temel akışları gerçek tarayıcıda (chromium) doğrular; `npm run e2e` ile çalışır.
 
@@ -228,48 +230,42 @@ Ayrıca **Playwright E2E** (`e2e/`) — routing, lazy-load ve temel akışları 
 
 ```
 .
-├─ convex/              # Backend (Convex)
-│  ├─ schema.ts         # DB şeması (pets, records, weights, ...)
-│  ├─ pets.ts           # Pet CRUD (auth'lu)
-│  ├─ records.ts        # Bakım kaydı CRUD
-│  ├─ weights.ts        # Ağırlık CRUD
-│  ├─ files.ts          # Storage upload URL
-│  ├─ backup.ts         # Toplu içe aktarma (yedek + demo)
-│  ├─ auth.ts           # Convex Auth (Password + Anonymous)
-│  ├─ users.ts          # viewer query, updateName
-│  ├─ push.ts           # Web Push abonelik + manuel test
-│  ├─ reminders.ts      # Günlük tarama action (Node runtime)
-│  └─ crons.ts          # Scheduled jobs
+├─ convex/                  # Backend (Convex)
+│  ├─ schema.ts             # DB şeması (pets, records, weights, ...)
+│  ├─ pets.ts               # Pet CRUD (auth'lu + foto storage temizliği)
+│  ├─ records.ts            # Bakım kaydı CRUD + reorder
+│  ├─ weights.ts            # Ağırlık CRUD
+│  ├─ files.ts              # Storage upload URL
+│  ├─ backup.ts             # Toplu içe aktarma (yedek + demo)
+│  ├─ auth.ts               # Convex Auth (Password + Anonymous)
+│  ├─ users.ts              # viewer query, updateName
+│  ├─ account.ts            # Şifre değiştirme, hesap silme, misafir → kayıtlı yükseltme
+│  ├─ email.ts              # Resend ile e-posta hatırlatıcı action
+│  ├─ push.ts               # Web Push abonelik + manuel test
+│  ├─ reminders.ts          # Günlük tarama action (Node runtime)
+│  ├─ remindersInternal.ts  # Bucket'lama mantığı (internal query)
+│  ├─ emailInternal.ts      # E-posta içeriğini sunucuda hazırla
+│  ├─ crons.ts              # Scheduled jobs
+│  ├─ validators.ts         # Sunucu tarafı length validation helper'ı
+│  ├─ rateLimit.ts          # Fixed-window rate limiter
+│  ├─ recordTypeLabel.ts    # Kayıt türü anahtar → TR etiket (bildirimler için)
+│  └─ lib/                  # Paylaşılan helper'lar (auth guard, dates, vetArg)
 ├─ src/
-│  ├─ pages/            # LandingPage, HomePage, PetDetailPage, ...
-│  ├─ components/       # Pet, Record, Weight, Vet, Layout, UI
-│  ├─ context/          # AuthProvider, PetProvider
-│  ├─ hooks/            # useAuth, usePet, useNotifications, useConfetti, ...
-│  ├─ lib/              # convex client, sentry init
-│  ├─ utils/            # dateHelpers, recordTypes (TS) + testleri
-│  ├─ i18n/             # tr + en
-│  └─ vite-env.d.ts     # Vite env var tipleri
-├─ public/              # PWA manifest, sw.js, ikonlar
-├─ scripts/             # screenshots.mjs
+│  ├─ pages/                # LandingPage, HomePage, PetDetailPage, ...
+│  ├─ components/           # Pet, Record, Weight, Vet, Layout, UI
+│  ├─ context/              # AuthProvider, PetProvider (tipli context value'lar)
+│  ├─ hooks/                # useAuth, usePet, useNotifications, useConfetti, ...
+│  ├─ lib/                  # convex client, sentry init, pdfExport, friendlyError
+│  ├─ utils/                # dateHelpers, petType, recordTypes, sortRecords + testleri
+│  ├─ types.ts              # Paylaşılan domain tipleri (Pet, PetRecord, Vet, ...)
+│  ├─ i18n/                 # tr + en (250+ anahtar, interpolation desteği)
+│  └─ vite-env.d.ts         # Vite env var tipleri
+├─ public/                  # PWA manifest, sw.js, ikonlar
+├─ scripts/                 # screenshots.mjs
 └─ .github/
    ├─ workflows/ci.yml             # lint · typecheck · test · build
    └─ PULL_REQUEST_TEMPLATE.md     # Self-review checklist
 ```
-
----
-
-## 🗺️ Roadmap
-
-Aktif geliştirilen / planlanan özellikler:
-
-- [ ] **Multi-user pet sharing** — eşler/aile bireyleri arasında pet'i ortak yönet
-- [ ] **iCal / Google Calendar sync** — hatırlatıcıları takvim uygulamasına ekle
-- [ ] **Aşı protokol şablonları** — yaşa/türe göre veteriner-önerili otomatik program
-- [ ] **Sentry + custom analytics dashboard** — hangi feature'ın ne kadar kullanıldığı
-- [ ] **Apple Health / Google Fit ağırlık entegrasyonu**
-- [ ] **Hayvan medikal geçmiş zaman çizelgesi** — kronolojik tek görünüm
-
-Önerilerin için issue aç → [github.com/YusufKosarDev/pati-defteri/issues](https://github.com/YusufKosarDev/pati-defteri/issues)
 
 ---
 
