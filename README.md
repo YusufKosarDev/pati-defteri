@@ -2,6 +2,13 @@
 
 > Evcil hayvanlarınızın aşı, bakım ve sağlık geçmişini tek bir yerden takip etmenizi sağlayan tam-yığın (fullstack) web uygulaması.
 
+---
+
+## 🌐 Dil / Language
+- [English Version / İngilizce Sürüm](README.en.md)
+
+---
+
 [![CI](https://github.com/YusufKosarDev/pati-defteri/actions/workflows/ci.yml/badge.svg)](https://github.com/YusufKosarDev/pati-defteri/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
